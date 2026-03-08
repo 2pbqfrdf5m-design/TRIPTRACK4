@@ -192,42 +192,36 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
 
   <div class="leg-label">Leg 1 — Departure</div>
   <div class="form-row">
-    <div class="form-group"><label>Date</label><input type="date" id="depDate" onchange="autoFillRetDate(); updatePreview();"></div>
-    <div class="form-group"><label>Time</label><button class="time-btn" id="depTimeBtn" onclick="openPicker('dep')">Tap to set</button></div>
+    <div class="form-group"><label>Date</label><input type="date" id="depDate" onchange="updatePreview()"></div>
+    <div class="form-group"><label>Train</label><input type="text" id="trainOut" placeholder="e.g. Q199" autocomplete="off" autocapitalize="characters"></div>
   </div>
   <div class="form-row">
-    <div class="form-group"><label>Train Out</label><input type="text" id="trainOut" placeholder="e.g. Q199" autocomplete="off" autocapitalize="characters"></div>
-    <div class="form-group"></div>
-  </div>
-
-  <div class="layover-label">Layover at Destination</div>
-  <div class="form-row">
-    <div class="form-group"><label>Arrived Dest</label><button class="time-btn" id="arrDestBtn" onclick="openPicker('arrDest')">Optional</button></div>
-    <div class="form-group"><label>Left Dest</label><button class="time-btn" id="depDestBtn" onclick="openPicker('depDest')">Optional</button></div>
+    <div class="form-group"><label>On Duty</label><button class="time-btn" id="depTimeBtn" onclick="openPicker('dep')">Tap to set</button></div>
+    <div class="form-group"><label>Off Duty</label><button class="time-btn" id="arrDestBtn" onclick="openPicker('arrDest')">Tap to set</button></div>
   </div>
 
   <div class="leg-label">Leg 2 — Return</div>
   <div class="form-row">
-    <div class="form-group"><label>Date</label><input type="date" id="retDate" onchange="updatePreview();"></div>
-    <div class="form-group"><label>Time</label><button class="time-btn" id="retTimeBtn" onclick="openPicker('ret')">Tap to set</button></div>
+    <div class="form-group"><label>Date</label><input type="date" id="retDate" onchange="updatePreview()"></div>
+    <div class="form-group"><label>Train</label><input type="text" id="trainBack" placeholder="e.g. U752" autocomplete="off" autocapitalize="characters"></div>
   </div>
   <div class="form-row">
-    <div class="form-group"><label>Train Back</label><input type="text" id="trainBack" placeholder="e.g. U752" autocomplete="off" autocapitalize="characters"></div>
-    <div class="form-group"></div>
+    <div class="form-group"><label>On Duty</label><button class="time-btn" id="depDestBtn" onclick="openPicker('depDest')">Tap to set</button></div>
+    <div class="form-group"><label>Off Duty</label><button class="time-btn" id="retTimeBtn" onclick="openPicker('ret')">Tap to set</button></div>
   </div>
 
-  <div class="form-group" style="margin-bottom:10px; margin-top:6px;">
+  <div class="form-group" style="margin-bottom:10px;margin-top:6px;">
     <label>Notes</label>
     <input type="text" id="notes" placeholder="Optional">
   </div>
 
   <div class="duty-preview">
+    <div class="duty-row"><span class="duty-label">Leg 1 on duty</span><span class="duty-value" id="prevLeg1">—</span></div>
+    <div class="duty-row"><span class="duty-label">Bunkhouse (auto)</span><span class="duty-value" id="prevBunk">—</span></div>
+    <div class="duty-row"><span class="duty-label">Leg 2 on duty</span><span class="duty-value" id="prevLeg2">—</span></div>
     <div class="duty-row"><span class="duty-label">Total hours away</span><span class="duty-value" id="prevHours">—</span></div>
-    <div class="duty-row"><span class="duty-label">On duty (Leg 1 + Leg 2)</span><span class="duty-value" id="prevOnDuty">—</span></div>
-    <div class="duty-row"><span class="duty-label">Bunkhouse (layover)</span><span class="duty-value" id="prevBunk">—</span></div>
     <div class="duty-row"><span class="duty-label">Meals claimable</span><span class="duty-value gold" id="prevMeals">—</span></div>
-    <div class="duty-row"><span class="duty-label">Gross expenses</span><span class="duty-value" id="prevGross">—</span></div>
-    <div class="duty-row"><span class="duty-label">50% deductible (Line 22900)</span><span class="duty-value green" id="prevDeduct">—</span></div>
+    <div class="duty-row"><span class="duty-label">Deductible (Line 22900)</span><span class="duty-value green" id="prevDeduct">—</span></div>
   </div>
 
   <button class="btn-submit" onclick="saveTrip()">＋ SAVE TRIP</button>
@@ -516,7 +510,7 @@ function openPicker(target) {
   const existing = document.getElementById(btnId).dataset.val;
   const [eh, em] = existing ? existing.split(':').map(Number) : [8, 0];
 
-  const titles = { dep:'Departure Time', ret:'Return Time', arrDest:'Arrived at Destination', depDest:'Left Destination' };
+  const titles = { dep:'Leg 1 — On Duty', arrDest:'Leg 1 — Off Duty', depDest:'Leg 2 — On Duty', ret:'Leg 2 — Off Duty' };
   document.getElementById('pickerTitle').textContent = titles[target] || 'Set Time';
 
   buildDrum('drumH', HOURS.map(h => String(h).padStart(2,'0')), eh);
@@ -698,45 +692,58 @@ function updatePreview() {
 // ══════════════════════════════════════════════════════════════════
 function saveTrip() {
   const depDate = document.getElementById('depDate').value;
-  const depTime = document.getElementById('depTimeBtn').dataset.val;
+  const leg1On  = document.getElementById('depTimeBtn').dataset.val;  // Leg 1 on duty
+  const leg1Off = document.getElementById('arrDestBtn').dataset.val;  // Leg 1 off duty
   const retDate = document.getElementById('retDate').value;
-  const retTime = document.getElementById('retTimeBtn').dataset.val;
+  const leg2On  = document.getElementById('depDestBtn').dataset.val;  // Leg 2 on duty
+  const leg2Off = document.getElementById('retTimeBtn').dataset.val;  // Leg 2 off duty
 
-  if (!depDate || !depTime) { showToast('Set departure date and time', true); return; }
-  if (!retDate || !retTime) { showToast('Set return date and time', true); return; }
+  if (!depDate || !leg1On)  { showToast('Set Leg 1 date & on duty time', true); return; }
+  if (!retDate || !leg2Off) { showToast('Set Leg 2 date & off duty time', true); return; }
 
-  const dep = new Date(depDate + 'T' + depTime);
-  const ret = new Date(retDate + 'T' + retTime);
+  const dep   = new Date(depDate + 'T' + leg1On);
+  const ret   = new Date(retDate + 'T' + leg2Off);
   const hours = (ret - dep) / 3600000;
   if (hours <= 0) { showToast('Return must be after departure', true); return; }
 
-  const arrDestTime = document.getElementById('arrDestBtn').dataset.val;
-  const depDestTime = document.getElementById('depDestBtn').dataset.val;
-
-  let bunkhouseH = 0, onDutyH = 0, leg1h = 0, leg2h = 0;
-  if (arrDestTime && depDestTime) {
-    const arrD = new Date(depDate + 'T' + arrDestTime);
-    const depD = new Date(depDate + 'T' + depDestTime);
-    if (depD <= arrD) depD.setDate(depD.getDate() + 1);
-    bunkhouseH = Math.max(0, (depD - arrD) / 3600000);
-    leg1h      = Math.max(0, (arrD - dep) / 3600000);
-    leg2h      = Math.max(0, (ret - depD) / 3600000);
-    onDutyH    = leg1h + leg2h;
+  // Leg 1 duration
+  let leg1h = 0;
+  if (leg1Off) {
+    let l1off = new Date(depDate + 'T' + leg1Off);
+    if (l1off <= dep) l1off.setDate(l1off.getDate() + 1); // midnight cross
+    leg1h = Math.max(0, (l1off - dep) / 3600000);
   }
 
-  const meals  = calcMeals(hours);
-  const gross  = meals * cfg.rate;
-  const deduct = gross * (cfg.deduct / 100);
+  // Leg 2 duration
+  let leg2h = 0;
+  if (leg2On) {
+    const l2on = new Date(retDate + 'T' + leg2On);
+    leg2h = Math.max(0, (ret - l2on) / 3600000);
+  }
+
+  // Bunkhouse = gap between Leg 1 off duty and Leg 2 on duty
+  let bunkhouseH = 0;
+  if (leg1Off && leg2On) {
+    let l1off = new Date(depDate + 'T' + leg1Off);
+    const l2on  = new Date(retDate + 'T' + leg2On);
+    if (l1off <= dep) l1off.setDate(l1off.getDate() + 1);
+    bunkhouseH = Math.max(0, (l2on - l1off) / 3600000);
+  }
+
+  const onDutyH = leg1h + leg2h;
+  const meals   = calcMeals(hours);
+  const gross   = meals * cfg.rate;
+  const deduct  = gross * (cfg.deduct / 100);
   const tripYear = parseInt(depDate.split('-')[0]);
 
   const trip = {
-    id:         Date.now() + Math.random(),
-    depDate, depTime, retDate, retTime,
-    arrDestTime: arrDestTime || '',
-    depDestTime: depDestTime || '',
-    origin:  cfg.origin,
-    dest:    cfg.dest,
-    notes:   document.getElementById('notes').value.trim(),
+    id: Date.now() + Math.random(),
+    depDate, depTime: leg1On,
+    retDate, retTime: leg2Off,
+    leg1OffTime: leg1Off || '',
+    leg2OnTime:  leg2On  || '',
+    origin: cfg.origin, dest: cfg.dest,
+    notes:     document.getElementById('notes').value.trim(),
     trainOut:  document.getElementById('trainOut').value.trim().toUpperCase(),
     trainBack: document.getElementById('trainBack').value.trim().toUpperCase(),
     series: getTrainSeries(document.getElementById('trainOut').value),
@@ -752,7 +759,7 @@ function saveTrip() {
 
   resetForm();
   renderTrips();
-  showToast(`Trip saved · ${meals} meal${meals !== 1 ? 's' : ''} · $${deduct.toFixed(2)} deductible ✓`);
+  showToast(`Trip saved · ${meals} meal${meals!==1?'s':''} · $${deduct.toFixed(2)} deductible ✓`);
   switchTab('sheet');
 }
 
@@ -763,14 +770,14 @@ function resetForm() {
   document.getElementById('trainOut').value  = '';
   document.getElementById('trainBack').value = '';
   document.getElementById('notes').value     = '';
-  ['depTimeBtn','retTimeBtn','arrDestBtn','depDestBtn'].forEach(id => {
+  ['depTimeBtn','arrDestBtn','depDestBtn','retTimeBtn'].forEach(id => {
     const btn = document.getElementById(id);
-    btn.textContent = id.includes('arr') || id.includes('depDest') ? 'Optional' : 'Tap to set';
+    btn.textContent = 'Tap to set';
     btn.dataset.val = '';
     btn.classList.remove('set');
   });
-  ['prevHours','prevOnDuty','prevBunk','prevMeals','prevGross','prevDeduct'].forEach(id => {
-    document.getElementById(id).textContent = '—';
+  ['prevLeg1','prevBunk','prevLeg2','prevHours','prevMeals','prevDeduct'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = '—';
   });
 }
 
