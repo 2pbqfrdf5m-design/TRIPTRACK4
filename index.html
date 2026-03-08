@@ -174,7 +174,14 @@ canvas.chart { width: 100%; border-radius: 10px; background: var(--steel); displ
 .cats-row-review td { color: var(--gold); }
 .cats-row-skip   td { color: var(--muted); text-decoration: line-through; }
 
-/* WRAPPED OVERLAY */
+/* LEG BOX */
+.leg-box { background: var(--steel); border: 1px solid var(--red); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+
+/* GRID CELLS */
+.grid-cell { background: none; border: none; color: var(--muted); font-size: 13px; padding: 8px 6px; cursor: pointer; width: 100%; text-align: left; font-family: 'Barlow', sans-serif; }
+.grid-cell.set { color: var(--light); font-weight: 600; }
+.grid-train { background: none; border: none; color: var(--light); font-size: 13px; padding: 8px 6px; width: 70px; font-family: monospace; outline: none; }
+.grid-train::placeholder { color: var(--muted); }
 #wrappedOverlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 500; background: #0a0f1a; overflow-y: auto; padding: 20px 16px 100px; }
 </style>
 </head>
@@ -205,31 +212,43 @@ canvas.chart { width: 100%; border-radius: 10px; background: var(--steel); displ
   <div class="section-title">Log a Trip</div>
 
   <div class="leg-label">Leg 1 — Departure</div>
-  <div class="form-row">
-    <div class="form-group"><label>Date</label><input type="date" id="depDate"></div>
-    <div class="form-group"><label>Time</label><button class="time-btn" id="depTimeBtn" onclick="openPicker('dep')">Tap to set</button></div>
+  <div class="leg-box">
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="depDate" onchange="updatePreview()"></div>
+      <div class="form-group"><label>Time</label><button class="time-btn" id="depTimeBtn" onclick="openPicker('dep')">Tap to set</button></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Train Out</label><input type="text" id="trainOut" placeholder="e.g. Q199" autocomplete="off" autocapitalize="characters"></div>
+      <div class="form-group"></div>
+    </div>
   </div>
 
-  <div class="leg-label">Destination</div>
-  <div class="form-row">
-    <div class="form-group"><label>Arrival at Dest</label><button class="time-btn" id="arrDestBtn" onclick="openPicker('arrDest')">Tap to set</button></div>
-    <div class="form-group"><label>Departure from Dest</label><button class="time-btn" id="depDestBtn" onclick="openPicker('depDest')">Tap to set</button></div>
+  <div class="leg-label">Layover</div>
+  <div class="leg-box" style="border-color:var(--track);">
+    <div class="form-row">
+      <div class="form-group"><label>Arrived Dest</label><button class="time-btn" id="arrDestBtn" onclick="openPicker('arrDest')">Tap to set</button></div>
+      <div class="form-group"><label>Left Dest</label><button class="time-btn" id="depDestBtn" onclick="openPicker('depDest')">Tap to set</button></div>
+    </div>
+    <div class="duty-row" style="border:none;padding:4px 0 0;"><span class="duty-label">Bunkhouse time</span><span class="duty-value" id="prevBunk" style="font-size:15px;">—</span></div>
   </div>
 
   <div class="leg-label">Leg 2 — Return</div>
-  <div class="form-row">
-    <div class="form-group"><label>Date</label><input type="date" id="retDate"></div>
-    <div class="form-group"><label>Time</label><button class="time-btn" id="retTimeBtn" onclick="openPicker('ret')">Tap to set</button></div>
+  <div class="leg-box">
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="retDate" onchange="updatePreview()"></div>
+      <div class="form-group"><label>Time</label><button class="time-btn" id="retTimeBtn" onclick="openPicker('ret')">Tap to set</button></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Train Back</label><input type="text" id="trainBack" placeholder="e.g. U752" autocomplete="off" autocapitalize="characters"></div>
+      <div class="form-group"></div>
+    </div>
   </div>
 
-  <div class="form-row">
-    <div class="form-group"><label>Train Out</label><input type="text" id="trainOut" placeholder="e.g. Q199" autocomplete="off" autocapitalize="characters"></div>
-    <div class="form-group"><label>Train Back</label><input type="text" id="trainBack" placeholder="e.g. U752" autocomplete="off" autocapitalize="characters"></div>
-  </div>
-  <div class="form-group" style="margin-bottom:10px;"><label>Notes</label><input type="text" id="notes" placeholder="Optional"></div>
+  <div class="form-group" style="margin-bottom:10px;margin-top:4px;"><label>Notes</label><input type="text" id="notes" placeholder="Optional"></div>
 
   <div class="duty-preview" id="dutyPreview">
     <div class="duty-row"><span class="duty-label">Total hours away</span><span class="duty-value" id="prevHours">—</span></div>
+    <div class="duty-row"><span class="duty-label">On duty (Leg 1 + Leg 2)</span><span class="duty-value" id="prevOnDuty">—</span></div>
     <div class="duty-row"><span class="duty-label">Meals claimable</span><span class="duty-value gold" id="prevMeals">—</span></div>
     <div class="duty-row"><span class="duty-label">Gross expenses</span><span class="duty-value" id="prevGross">—</span></div>
     <div class="duty-row"><span class="duty-label">Deductible (50%)</span><span class="duty-value green" id="prevDeduct">—</span></div>
@@ -319,40 +338,33 @@ canvas.chart { width: 100%; border-radius: 10px; background: var(--steel); displ
     <div class="cn-logo" style="background:var(--gold);color:#000;">✏️</div>
     <div class="header-text">
       <h1>Quick Entry</h1>
-      <p>Bulk import — one trip per line</p>
+      <p>Tap any cell to fill in — empty rows skipped</p>
     </div>
   </header>
-  <div class="cats-instructions">
-    <div class="cats-step"><span class="cats-step-num">1</span><span>One trip per line — type what you know</span></div>
-    <div class="cats-step"><span class="cats-step-num">2</span><span>Format: <code style="color:var(--gold);font-size:12px;">MM/DD HHMM MM/DD HHMM TrainID</code></span></div>
-    <div class="cats-step"><span class="cats-step-num">3</span><span>Example: <code style="color:var(--muted);font-size:12px;">01/02 1550 01/03 115 Q199</code></span></div>
+
+  <!-- GRID -->
+  <div class="sheet-wrap" style="margin-bottom:12px;">
+    <table class="sheet-table" id="bulkGrid" style="min-width:500px;">
+      <thead><tr>
+        <th style="width:28px;">#</th>
+        <th>Date Out</th>
+        <th>Time Out</th>
+        <th>Date Back</th>
+        <th>Time Back</th>
+        <th>Train</th>
+        <th style="width:28px;"></th>
+      </tr></thead>
+      <tbody id="bulkGridBody"></tbody>
+    </table>
   </div>
-  <textarea id="quickEntryArea"
-    placeholder="01/02 1550 01/03 0115 Q199&#10;01/03 1630 01/03 2040 DHT&#10;01/05 1815 01/06 0605 U753&#10;&#10;One trip per line. Press Enter for next."
-    style="width:100%;height:220px;background:var(--steel);border:2px solid var(--track);border-radius:14px;color:var(--light);font-family:monospace;font-size:14px;padding:14px;resize:vertical;margin-bottom:10px;line-height:1.8;outline:none;"></textarea>
-  <div style="display:flex;gap:8px;margin-bottom:12px;">
-    <button onclick="parseQuickEntry()" style="flex:1;padding:14px;background:var(--gold);border:none;border-radius:12px;color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:1px;cursor:pointer;">🔍 PARSE</button>
+
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <button onclick="bulkImport()" style="flex:1;padding:14px;background:var(--green);border:none;border-radius:12px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:1px;cursor:pointer;">✓ IMPORT TRIPS</button>
     <button onclick="document.getElementById('catsFileInput').click()" style="padding:14px 16px;background:var(--steel);border:1px solid var(--track);border-radius:12px;color:var(--muted);font-size:20px;cursor:pointer;" title="Import from screenshots">📷</button>
     <input type="file" id="catsFileInput" accept="image/*" multiple style="display:none" onchange="handleCatsImages(event)">
   </div>
-  <div id="catsResults" style="display:none;">
-    <div class="section-title" style="margin-top:4px;">Parsed Trips <span id="catsResultCount" style="color:var(--muted);font-size:13px;"></span></div>
-    <div id="catsSummaryPills" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"></div>
-    <div class="sheet-wrap" style="margin-bottom:12px;">
-      <table class="sheet-table" id="catsPreviewTable">
-        <thead><tr><th></th><th>Dep</th><th>Time</th><th>Train</th><th>Ret</th><th>Time</th><th>Train</th><th>Hrs</th><th>Note</th></tr></thead>
-        <tbody id="catsPreviewBody"></tbody>
-      </table>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;">
-      <button class="btn-export danger" onclick="resetCatsImport()">✕ Cancel</button>
-      <button class="btn-export primary" id="catsImportBtn" onclick="confirmCatsImport()" style="background:var(--green);border-color:var(--green);color:#fff;">✓ Import</button>
-    </div>
-  </div>
-  <div class="empty-state" id="catsEmpty">
-    <div class="icon">✏️</div>
-    <p>Type your trips above — one per line — then tap Parse.</p>
-  </div>
+  <button onclick="clearBulkGrid()" style="width:100%;padding:10px;background:none;border:1px solid var(--track);border-radius:10px;color:var(--muted);font-size:14px;cursor:pointer;margin-bottom:8px;">🗑 Clear Grid</button>
+  <button onclick="addBulkRow()" style="width:100%;padding:10px;background:none;border:1px solid var(--track);border-radius:10px;color:var(--gold);font-size:14px;cursor:pointer;margin-bottom:16px;">＋ Add Row</button>
 </div>
 
 <!-- ══ TAB: SETTINGS ══ -->
@@ -551,6 +563,18 @@ function updatePreview() {
   document.getElementById('prevMeals').textContent  = meals;
   document.getElementById('prevGross').textContent  = '$' + gross.toFixed(2);
   document.getElementById('prevDeduct').textContent = '$' + deduct.toFixed(2);
+  // Bunkhouse and on-duty
+  const arrDestTime = document.getElementById('arrDestBtn').dataset.val;
+  const depDestTime = document.getElementById('depDestBtn').dataset.val;
+  if (arrDestTime && depDestTime) {
+    const arrD = new Date(depDate + 'T' + arrDestTime);
+    const depD = new Date(depDate + 'T' + depDestTime);
+    const bunk = Math.max(0, (depD - arrD) / 3600000);
+    const leg1 = Math.max(0, (arrD - dep) / 3600000);
+    const leg2 = Math.max(0, (ret - depD) / 3600000);
+    document.getElementById('prevBunk').textContent   = bunk.toFixed(1) + 'h';
+    document.getElementById('prevOnDuty').textContent = (leg1 + leg2).toFixed(1) + 'h';
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -1080,60 +1104,149 @@ function shareWrapped() {
 }
 
 // ══════════════════════════════════════════════════════
-// QUICK ENTRY PARSER
+// BULK ENTRY GRID
 // ══════════════════════════════════════════════════════
-function resetCatsImport() {
-  catsparse=[];
-  document.getElementById('catsResults').style.display='none';
-  document.getElementById('catsEmpty').style.display='';
-  const ta=document.getElementById('quickEntryArea'); if(ta) ta.value='';
-  const fi=document.getElementById('catsFileInput');  if(fi) fi.value='';
+const GRID_ROWS = 20;
+let bulkData = Array.from({length:GRID_ROWS}, () => ({depDate:'',depTime:'',retDate:'',retTime:'',train:''}));
+let gridPickerTarget = null; // {row, field}
+
+function initCatsTab() { renderBulkGrid(); }
+
+function renderBulkGrid() {
+  const body = document.getElementById('bulkGridBody');
+  body.innerHTML = bulkData.map((row, i) => {
+    const filled = row.depDate || row.depTime || row.retDate || row.retTime || row.train;
+    return `<tr id="grow-${i}" style="${filled?'background:rgba(26,154,90,0.07)':''}">
+      <td style="color:var(--muted);font-size:11px;text-align:center;">${i+1}</td>
+      <td><button class="grid-cell ${row.depDate?'set':''}" onclick="openGridDatePicker(${i},'depDate')">${row.depDate ? fmtDate(row.depDate) : '—'}</button></td>
+      <td><button class="grid-cell ${row.depTime?'set':''}" onclick="openGridTimePicker(${i},'depTime')">${row.depTime || '—'}</button></td>
+      <td><button class="grid-cell ${row.retDate?'set':''}" onclick="openGridDatePicker(${i},'retDate')">${row.retDate ? fmtDate(row.retDate) : '—'}</button></td>
+      <td><button class="grid-cell ${row.retTime?'set':''}" onclick="openGridTimePicker(${i},'retTime')">${row.retTime || '—'}</button></td>
+      <td><input class="grid-train" type="text" value="${row.train}" placeholder="Q199" autocapitalize="characters" oninput="bulkData[${i}].train=this.value.toUpperCase();updateGridRow(${i})"></td>
+      <td><button onclick="clearGridRow(${i})" style="background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px;">✕</button></td>
+    </tr>`;
+  }).join('');
 }
 
-function parseQuickEntry() {
-  const raw=document.getElementById('quickEntryArea').value.trim();
-  if (!raw) { showToast('Enter some trips first', true); return; }
-  const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
-  const events=lines.map(parseQuickLine).filter(Boolean);
-  if (!events.length) { showToast('Could not parse any trips — check your format', true); return; }
-  catsparse=pairCATSEvents(events);
-  renderCatsPreview(catsparse);
-  document.getElementById('catsEmpty').style.display='none';
+function updateGridRow(i) {
+  const row = bulkData[i];
+  const tr = document.getElementById('grow-'+i);
+  if (tr) tr.style.background = (row.depDate||row.depTime||row.retDate||row.retTime||row.train) ? 'rgba(26,154,90,0.07)' : '';
 }
 
-function parseQuickLine(line) {
-  line=line.trim(); if(!line) return null;
-  const yr=cfg.year||new Date().getFullYear();
-  // Extract dates MM/DD
-  const dates=[];
-  const dateRe=/\b(\d{1,2})\/(\d{2})\b/g; let dm;
-  while((dm=dateRe.exec(line))!==null) dates.push(`${yr}-${dm[1].padStart(2,'0')}-${dm[2].padStart(2,'0')}`);
-  // Remove dates before scanning times
-  const noDate=line.replace(/\b\d{1,2}\/\d{2}\b/g,'');
-  // Extract 3-4 digit times
-  const times=[];
-  const timeRe=/\b(\d{3,4})\b/g; let tm2;
-  while((tm2=timeRe.exec(noDate))!==null){
-    const t=tm2[1].padStart(4,'0');
-    const h=parseInt(t.slice(0,2)), m=parseInt(t.slice(2,4));
-    if(h>=0&&h<=23&&m>=0&&m<=59) times.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+function clearGridRow(i) {
+  bulkData[i] = {depDate:'',depTime:'',retDate:'',retTime:'',train:''};
+  renderBulkGrid();
+}
+
+function addBulkRow() {
+  bulkData.push({depDate:'',depTime:'',retDate:'',retTime:'',train:''});
+  renderBulkGrid();
+}
+
+function clearBulkGrid() {
+  bulkData = Array.from({length:GRID_ROWS}, () => ({depDate:'',depTime:'',retDate:'',retTime:'',train:''}));
+  renderBulkGrid();
+}
+
+// Date picker for grid — reuse native date input via hidden element
+function openGridDatePicker(row, field) {
+  gridPickerTarget = {row, field};
+  let inp = document.getElementById('gridDateInput');
+  if (!inp) {
+    inp = document.createElement('input');
+    inp.type = 'date'; inp.id = 'gridDateInput';
+    inp.style.cssText = 'position:fixed;opacity:0;top:50%;left:50%;width:1px;height:1px;';
+    inp.addEventListener('change', onGridDatePicked);
+    document.body.appendChild(inp);
   }
-  // Extract train IDs
-  const trains=[];
-  const trainRe=/\b([A-Za-z]{1,4}\d{2,7}[A-Za-z]?\d*|[Dd][Hh][Tt][A-Za-z0-9]*)\b/g; let tr;
-  while((tr=trainRe.exec(noDate))!==null) trains.push(tr[1].toUpperCase());
-  if(!dates.length&&!times.length) return null;
-  return {
-    startDate: dates[0]||`${yr}-01-01`,
-    startTime: times[0]||'00:00',
-    endDate:   dates[1]||dates[0]||`${yr}-01-01`,
-    endTime:   times[1]||'00:00',
-    trainId:   trains[0]||'',
-    totalTime: '00:00',
-    raw: line,
-    incomplete: dates.length<2||times.length<2
-  };
+  inp.value = bulkData[row][field] || '';
+  inp.click(); inp.focus();
 }
+function onGridDatePicked(e) {
+  if (!gridPickerTarget) return;
+  const {row, field} = gridPickerTarget;
+  bulkData[row][field] = e.target.value;
+  // Auto-fill retDate from depDate if empty
+  if (field === 'depDate' && !bulkData[row].retDate) bulkData[row].retDate = e.target.value;
+  renderBulkGrid();
+  gridPickerTarget = null;
+}
+
+// Time picker for grid — reuse existing drum picker
+function openGridTimePicker(row, field) {
+  gridPickerTarget = {row, field};
+  const existing = bulkData[row][field];
+  const [eh, em] = existing ? existing.split(':').map(Number) : [8, 0];
+  pickerTarget = '__grid__';
+  document.getElementById('pickerTitle').textContent = field === 'depTime' ? 'Departure Time' : 'Return Time';
+  buildDrum('drumH', HOURS.map(h=>String(h).padStart(2,'0')), eh);
+  buildDrum('drumM', MINS.map(m=>String(m).padStart(2,'0')), MINS.findIndex(m=>m>=em)||0);
+  document.getElementById('pickerOverlay').classList.add('open');
+}
+
+function bulkImport() {
+  const toAdd = bulkData.filter(r => r.depDate && r.depTime && r.retDate && r.retTime);
+  if (!toAdd.length) { showToast('Fill in at least dep date, dep time, ret date, ret time', true); return; }
+  let added = 0, skipped = 0;
+  toAdd.forEach(r => {
+    const dep = new Date(r.depDate+'T'+r.depTime);
+    const ret = new Date(r.retDate+'T'+r.retTime);
+    const hours = (ret-dep)/3600000;
+    if (hours <= 0) { skipped++; return; }
+    const meals  = calcMeals(hours);
+    const gross  = meals * cfg.rate;
+    const deduct = gross * (cfg.deduct/100);
+    const yr = parseInt(r.depDate.split('-')[0]);
+    const trip = {
+      id: Date.now()+Math.random(),
+      depDate:r.depDate, depTime:r.depTime,
+      retDate:r.retDate, retTime:r.retTime,
+      origin:cfg.origin, dest:cfg.dest,
+      notes:'', trainOut:r.train, trainBack:'',
+      series: getTrainSeries(r.train),
+      hours, meals, gross, deduct,
+      rate:cfg.rate, deductPct:cfg.deduct,
+      leg1h:0, leg2h:0, bunkhouseH:0, onDutyH:0
+    };
+    const yt = loadTripsForYear(yr);
+    if (yt.find(x => x.depDate===r.depDate && x.depTime===r.depTime)) { skipped++; return; }
+    yt.push(trip);
+    localStorage.setItem(tripsKey(yr), JSON.stringify(yt));
+    if (yr === activeYear) trips = yt;
+    added++;
+  });
+  renderTrips();
+  clearBulkGrid();
+  let msg = `Imported ${added} trip${added!==1?'s':''}`;
+  if (skipped) msg += `, ${skipped} skipped`;
+  showToast(msg + ' ✓');
+  switchTab('sheet');
+}
+
+// Hook grid into existing confirmPicker
+const _origConfirmPicker = confirmPicker;
+confirmPicker = function() {
+  if (pickerTarget === '__grid__' && gridPickerTarget) {
+    const hDrum = document.getElementById('drumH');
+    const mDrum = document.getElementById('drumM');
+    const h = HOURS[Math.max(0, Math.min(Math.round(hDrum.scrollTop/40), HOURS.length-1))];
+    const m = MINS[Math.max(0, Math.min(Math.round(mDrum.scrollTop/40), MINS.length-1))];
+    const timeStr = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+    bulkData[gridPickerTarget.row][gridPickerTarget.field] = timeStr;
+    gridPickerTarget = null;
+    pickerTarget = null;
+    closePicker();
+    renderBulkGrid();
+  } else {
+    _origConfirmPicker();
+  }
+};
+
+// Old parse functions kept for screenshot import path
+function resetCatsImport() { clearBulkGrid(); }
+function parseQuickEntry() {}
+function parseQuickLine() { return null; }
 
 function getTrainSeries(trainId) {
   if(!trainId) return 'Unknown';
