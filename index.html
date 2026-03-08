@@ -265,6 +265,7 @@ canvas.chart { width: 100%; border-radius: 10px; background: var(--steel); displ
   <div class="export-bar">
     <button class="btn-export primary wide" onclick="exportSummary()">📋 Copy TL2 Summary</button>
     <button class="btn-export" onclick="exportCSV()">📄 Export CSV</button>
+    <button class="btn-export" onclick="exportPDF()" style="color:var(--gold);border-color:var(--gold);">📑 Export PDF</button>
     <button class="btn-export danger" onclick="clearAll()">🗑 Clear All</button>
   </div>
 </div>
@@ -728,6 +729,73 @@ ${cfg.deduct}% deductible (Line 22900):  $${td.toFixed(2)}
 Generated: ${new Date().toLocaleDateString('en-CA')}`;
   navigator.clipboard.writeText(text).then(()=>showToast('TL2 summary copied ✓'));
 }
+function exportPDF() {
+  if (!trips.length) { showToast('No trips to export', true); return; }
+  const sorted = [...trips].sort((a,b) => a.depDate.localeCompare(b.depDate));
+  const tg = sorted.reduce((s,t)=>s+t.gross,  0);
+  const td = sorted.reduce((s,t)=>s+t.deduct, 0);
+  const tm = sorted.reduce((s,t)=>s+t.meals,  0);
+  const ta = sorted.reduce((s,t)=>s+t.hours,  0);
+  const rows = sorted.map((t,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td>${fmtDate(t.depDate)}</td><td>${t.depTime}</td>
+      <td>${fmtDate(t.retDate)}</td><td>${t.retTime}</td>
+      <td>${t.hours.toFixed(1)}</td>
+      <td>${t.onDutyH ? t.onDutyH.toFixed(1) : '—'}</td>
+      <td>${t.bunkhouseH ? t.bunkhouseH.toFixed(1) : '—'}</td>
+      <td>${t.meals}</td><td>$${t.gross.toFixed(2)}</td><td>$${t.deduct.toFixed(2)}</td>
+      <td>${t.notes||''}</td>
+    </tr>`).join('');
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Trip Track TL2 Report ${activeYear}</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:Arial,sans-serif; font-size:11px; color:#111; padding:30px; }
+h1 { font-size:20px; color:#1a1a2e; margin-bottom:4px; }
+p.sub { color:#555; font-size:11px; margin-bottom:16px; }
+.meta { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
+.meta-box { border:1px solid #ddd; border-radius:6px; padding:10px; }
+.meta-box .lbl { font-size:9px; text-transform:uppercase; color:#888; letter-spacing:1px; }
+.meta-box .val { font-size:18px; font-weight:bold; color:#1a1a2e; margin-top:2px; }
+.meta-box .val.g { color:#1a7a4a; }
+table { width:100%; border-collapse:collapse; }
+th { background:#1a1a2e; color:#fff; padding:7px 6px; font-size:9px; text-transform:uppercase; text-align:left; }
+td { padding:6px; border-bottom:1px solid #eee; font-size:10px; }
+tr:nth-child(even) td { background:#f8f8f8; }
+tfoot td { background:#f0f4ff; font-weight:bold; border-top:2px solid #1a1a2e; }
+.footer { margin-top:16px; font-size:10px; color:#666; line-height:1.7; border-top:1px solid #ddd; padding-top:12px; }
+@media print { body { padding:15px; } }
+</style></head><body>
+<h1>🚂 TRIP TRACK — TL2 MEAL EXPENSE REPORT</h1>
+<p class="sub">Tax Year: <strong>${activeYear}</strong> &nbsp;|&nbsp; Method: CRA Simplified ($${cfg.rate}/meal, 1 per 4 hrs, max ${cfg.maxMeals}/day) &nbsp;|&nbsp; Generated: ${new Date().toLocaleDateString('en-CA')}</p>
+<div class="meta">
+  <div class="meta-box"><div class="lbl">Trips</div><div class="val">${sorted.length}</div></div>
+  <div class="meta-box"><div class="lbl">Total Meals</div><div class="val">${tm}</div></div>
+  <div class="meta-box"><div class="lbl">Gross Expenses</div><div class="val">$${tg.toFixed(2)}</div></div>
+  <div class="meta-box"><div class="lbl">Deductible (Line 22900)</div><div class="val g">$${td.toFixed(2)}</div></div>
+</div>
+<table>
+  <thead><tr><th>#</th><th>Dep Date</th><th>Dep Time</th><th>Ret Date</th><th>Ret Time</th><th>Away(h)</th><th>On Duty</th><th>Bunkhouse</th><th>Meals</th><th>Gross</th><th>Deductible</th><th>Notes</th></tr></thead>
+  <tbody>${rows}</tbody>
+  <tfoot><tr><td colspan="5">TOTALS — ${sorted.length} trips</td><td>${ta.toFixed(1)}</td><td>—</td><td>—</td><td>${tm}</td><td>$${tg.toFixed(2)}</td><td>$${td.toFixed(2)}</td><td></td></tr></tfoot>
+</table>
+<div class="footer">
+  <strong>CRA Reference:</strong> Meal expenses claimed using simplified method per IT-518R. Railway employees claim 50% on <strong>Line 22900</strong>. Supporting docs: <strong>TL2</strong> and <strong>T2200</strong>. Retain records for <strong>6 years</strong>.<br>
+  Route: ${cfg.origin} ↔ ${cfg.dest} &nbsp;|&nbsp; Rate: $${cfg.rate}/meal &nbsp;|&nbsp; Deductible: ${cfg.deduct}%
+</div>
+</body></html>`;
+  const win = window.open('', '_blank');
+  if (win) { win.document.write(html); win.document.close(); win.print(); showToast('PDF report opened ✓'); }
+  else {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([html],{type:'text/html'}));
+    a.download = `TripTrack_TL2_${activeYear}.html`;
+    a.click();
+    showToast('Report downloaded ✓');
+  }
+}
+
 function clearAll() {
   if (!trips.length) return;
   if (confirm(`Delete all ${trips.length} trip${trips.length!==1?'s':''}? Cannot be undone.`)) {
@@ -812,7 +880,7 @@ function confirmPicker() {
   const btnId = pickerTarget+'TimeBtn';
   const btn = document.getElementById(btnId) || document.getElementById(pickerTarget+'Btn');
   if (btn) {
-    btn.textContent = fmt12(timeStr);
+    btn.textContent = timeStr;
     btn.classList.add('set');
     btn.dataset.val = timeStr;
   }
@@ -1208,22 +1276,29 @@ async function handleCatsImages(e) {
         method:'POST',
         headers:{'Content-Type':'application/json','anthropic-dangerous-allow-browser':'true','x-api-key':cfg.apiKey},
         body:JSON.stringify({
-          model:'claude-haiku-4-5-20251001',
-          max_tokens:1000,
+          model:'claude-sonnet-4-6',
+          max_tokens:2000,
           messages:[{role:'user',content:[
             {type:'image',source:{type:'base64',media_type:file.type,data:b64}},
-            {type:'text',text:`Extract all duty events from this CATS Hours of Service screenshot. Return ONLY a JSON array, no other text, like:
-[{"startDate":"2025-01-02","startTime":"15:50","endDate":"2025-01-03","endTime":"01:15","trainId":"Q199","totalTime":"09:25"},...]
-Use YYYY-MM-DD for dates, HH:MM for times. Leave trainId empty string if not visible.`}
+            {type:'text',text:`This is a CN Rail CATS Hours of Service log. Extract every duty event row.
+Each row has: a start date+time, an end date+time, a train/event ID (like Q199, U753, DHT098, G846, etc).
+Return ONLY valid JSON array, no markdown, no explanation:
+[{"startDate":"2025-01-02","startTime":"15:50","endDate":"2025-01-03","endTime":"01:15","trainId":"Q199"},...]
+Dates as YYYY-MM-DD, times as HH:MM 24hr. If train ID not visible use "". Extract ALL rows you can see.`}
           ]}]
         })
       });
       const data=await resp.json();
+      if(data.error){ showToast('API error: '+data.error.message, true); return; }
       const txt=data.content.map(c=>c.text||'').join('');
       const clean=txt.replace(/```json|```/g,'').trim();
       const parsed=JSON.parse(clean);
       allEvents.push(...parsed);
-    }catch(err){ console.error(err); }
+    }catch(err){
+      console.error(err);
+      showToast('Error: '+err.message, true);
+      return;
+    }
   }
   if(!allEvents.length){ showToast('No events found in screenshots',true); return; }
   catsparse=pairCATSEvents(allEvents);
