@@ -1,0 +1,2968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Trip Track</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Trip Track">
+<meta name="theme-color" content="#E31837">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red:   #E31837;
+  --dark:  #0a0f1a;
+  --navy:  #0d1f3c;
+  --steel: #1a3255;
+  --track: #2a4a7a;
+  --gold:  #f0a500;
+  --light: #e8eef5;
+  --muted: #8aa0bc;
+  --green: #1db87a;
+  --sat: env(safe-area-inset-top,    0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  font-family: 'Barlow', sans-serif;
+  background: var(--dark);
+  color: var(--light);
+  padding-top: var(--sat);
+  overflow-x: hidden;
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--navy);
+  border-top: 1px solid var(--track);
+  display: flex;
+  padding-bottom: var(--sab);
+  z-index: 100;
+}
+.nav-btn {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 10px 0; gap: 3px;
+  background: none; border: none; color: var(--muted);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+  cursor: pointer; transition: color 0.2s;
+}
+.nav-btn .nav-icon { font-size: 20px; }
+.nav-btn.active { color: var(--red); }
+
+/* ── TABS ── */
+.tab { display: none; padding: 14px 16px 100px; max-width: 860px; margin: 0 auto; }
+.tab.active { display: block; }
+
+/* ── HEADER ── */
+header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0 18px;
+  border-bottom: 2px solid var(--red);
+  margin-bottom: 18px;
+}
+.cn-logo {
+  background: var(--red); color: #fff;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 24px; letter-spacing: -1px;
+  padding: 4px 11px; border-radius: 4px; flex-shrink: 0;
+}
+.header-text h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: clamp(18px,5vw,26px);
+  letter-spacing: 1px; text-transform: uppercase; line-height: 1;
+}
+.header-text p { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.year-badge {
+  margin-left: auto; background: var(--steel);
+  border: 1px solid var(--track); color: var(--gold);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 17px; padding: 4px 11px;
+  border-radius: 4px; flex-shrink: 0;
+}
+
+/* ── CARDS ── */
+.summary-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 16px; }
+.card {
+  background: var(--navy); border: 1px solid var(--track);
+  border-radius: 8px; padding: 12px 10px; position: relative; overflow: hidden;
+}
+.card::before { content:''; position:absolute; top:0;left:0;right:0; height:3px; background:var(--red); }
+.card.green::before { background:var(--green); }
+.card.gold::before  { background:var(--gold); }
+.card-label { font-size:9px; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); font-weight:600; margin-bottom:4px; }
+.card-value { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:clamp(18px,4vw,26px); line-height:1; color:#fff; }
+.card-sub   { font-size:9px; color:var(--muted); margin-top:2px; }
+
+/* ── RATE BANNER ── */
+.rate-banner {
+  background: var(--steel); border:1px solid var(--track);
+  border-left: 4px solid var(--gold); border-radius:6px;
+  padding: 8px 12px; display:flex; flex-wrap:wrap;
+  gap: 8px 16px; margin-bottom:16px; font-size:11px;
+}
+.rate-item { display:flex; align-items:center; gap:5px; }
+.rate-dot  { width:6px; height:6px; border-radius:50%; background:var(--gold); flex-shrink:0; }
+.rate-item span   { color:var(--muted); }
+.rate-item strong { color:var(--gold); }
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:14px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--muted); margin-bottom:10px;
+  display:flex; align-items:center; gap:10px;
+}
+.section-title::after { content:''; flex:1; height:1px; background:var(--track); }
+
+/* ── FORM ── */
+.add-form {
+  background:var(--navy); border:1px solid var(--track);
+  border-radius:10px; padding:16px; margin-bottom:18px;
+}
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.form-group { display:flex; flex-direction:column; gap:4px; }
+.form-group.full { grid-column:1/-1; }
+label { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); font-weight:600; }
+input[type="text"], input[type="date"] {
+  background:var(--steel); border:1px solid var(--track);
+  color:#fff; padding:11px 12px; border-radius:8px;
+  font-family:'Barlow',sans-serif; font-size:16px;
+  outline:none; width:100%; -webkit-appearance:none;
+  transition:border-color 0.2s;
+}
+input[type="text"]:focus, input[type="date"]:focus { border-color:var(--gold); }
+input[type="date"]::-webkit-calendar-picker-indicator { filter:invert(0.6); }
+
+/* ── CUSTOM TIME PICKER ── */
+.time-input-btn {
+  background: var(--steel); border: 1px solid var(--track);
+  color: #fff; padding: 11px 12px; border-radius: 8px;
+  font-family: 'Barlow', sans-serif; font-size: 16px;
+  width: 100%; text-align: left; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: border-color 0.2s;
+}
+.time-input-btn:active, .time-input-btn.open { border-color: var(--gold); }
+.time-input-btn .placeholder { color: var(--muted); }
+
+/* Picker overlay */
+.picker-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200; display: none;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.picker-overlay.open { display: flex; }
+.picker-sheet {
+  background: var(--navy); border-top: 2px solid var(--red);
+  border-radius: 16px 16px 0 0; padding: 0 0 var(--sab);
+  width: 100%; max-width: 480px;
+}
+.picker-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px; border-bottom: 1px solid var(--track);
+}
+.picker-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 16px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--gold);
+}
+.picker-done {
+  background: var(--red); color: #fff; border: none;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 15px; letter-spacing: 1px;
+  padding: 7px 18px; border-radius: 6px; cursor: pointer;
+}
+.picker-drums {
+  display: flex; align-items: center; justify-content: center;
+  gap: 4px; padding: 10px 20px; position: relative;
+}
+/* Selection highlight bar */
+.picker-drums::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 40px); height: 44px;
+  background: rgba(240,165,0,0.1);
+  border: 1px solid rgba(240,165,0,0.3);
+  border-radius: 8px;
+  pointer-events: none;
+}
+.picker-sep {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 28px; color: var(--gold);
+  line-height: 1; padding-bottom: 2px; flex-shrink: 0;
+}
+.drum-wrap {
+  flex: 1; overflow: hidden;
+  height: 220px; position: relative;
+}
+.drum {
+  overflow-y: scroll;
+  height: 100%;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 88px 0; /* centre item in 220px = (220-44)/2 */
+  scrollbar-width: none;
+}
+.drum::-webkit-scrollbar { display: none; }
+.drum-item {
+  height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  scroll-snap-align: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 26px;
+  color: var(--muted);
+  transition: color 0.15s;
+  cursor: pointer;
+  user-select: none;
+}
+.drum-item.selected { color: #fff; }
+
+/* Fade top/bottom */
+.drum-wrap::before, .drum-wrap::after {
+  content: '';
+  position: absolute; left: 0; right: 0; height: 88px;
+  pointer-events: none; z-index: 1;
+}
+.drum-wrap::before { top: 0;    background: linear-gradient(to bottom, var(--navy), transparent); }
+.drum-wrap::after  { bottom: 0; background: linear-gradient(to top,   var(--navy), transparent); }
+
+/* ── CALC EXPLAINER ── */
+.calc-explainer {
+  font-size:12px; color:var(--muted); margin-bottom:10px;
+  background:rgba(240,165,0,0.06); border:1px solid rgba(240,165,0,0.15);
+  border-radius:6px; padding:9px 12px; line-height:1.6; min-height:40px;
+}
+.calc-explainer strong { color:var(--gold); }
+
+/* ── MEAL PREVIEW ── */
+.meal-preview {
+  background:var(--steel); border:1px solid var(--track);
+  border-radius:8px; display:grid;
+  grid-template-columns:repeat(4,1fr); margin-bottom:12px;
+}
+.meal-preview-col { text-align:center; padding:10px 6px; }
+.meal-preview-col+.meal-preview-col { border-left:1px solid var(--track); }
+.mp-label { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:3px; }
+.mp-val   { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:20px; color:#fff; line-height:1; }
+.mp-val.green { color:var(--green); }
+.mp-val.gold  { color:var(--gold); }
+.mp-sub { font-size:9px; color:var(--muted); margin-top:2px; }
+
+/* ── BUTTONS ── */
+.btn-add {
+  width:100%; background:var(--red); color:#fff; border:none;
+  padding:15px; border-radius:10px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:18px; letter-spacing:2px; text-transform:uppercase;
+  cursor:pointer; -webkit-appearance:none; transition:opacity 0.15s;
+}
+.btn-add:active { opacity:0.75; }
+
+/* ── TRIP LIST ── */
+.trip-list { display:flex; flex-direction:column; gap:8px; }
+.trip-row {
+  background:var(--navy); border:1px solid var(--track);
+  border-radius:8px; padding:12px;
+  display:grid; grid-template-columns:1fr auto auto;
+  gap:8px; align-items:start;
+}
+.trip-date-line { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:12px; color:var(--gold); margin-bottom:3px; }
+.trip-route { font-size:14px; font-weight:600; line-height:1.3; }
+.trip-route .arrow { color:var(--red); }
+.trip-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+.trip-pills { display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
+.pill { background:rgba(240,165,0,0.12); color:var(--gold); border-radius:4px; padding:2px 7px; font-size:11px; font-weight:600; }
+.trip-amount { text-align:right; padding-top:2px; }
+.trip-gross  { font-size:10px; color:var(--muted); }
+.trip-deduct { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:17px; color:var(--green); }
+.trip-actions { display:flex; flex-direction:column; gap:4px; }
+.btn-icon {
+  background:none; border:1px solid transparent; color:var(--muted);
+  width:30px; height:30px; border-radius:6px; cursor:pointer;
+  font-size:14px; display:flex; align-items:center; justify-content:center;
+  -webkit-appearance:none; padding:0;
+}
+.btn-icon.edit:active   { color:var(--gold); border-color:var(--gold); }
+.btn-icon.delete:active { color:var(--red);  border-color:var(--red); }
+
+.empty-state {
+  text-align:center; padding:44px 20px; color:var(--muted);
+  background:var(--navy); border:1px dashed var(--track); border-radius:10px;
+}
+.empty-state .icon { font-size:38px; margin-bottom:10px; opacity:0.5; }
+
+/* ── EXPORT BAR ── */
+.export-bar { margin-top:18px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.export-bar .wide { grid-column:1/-1; }
+.btn-export {
+  background:var(--steel); border:1px solid var(--track);
+  color:var(--light); padding:12px 10px; border-radius:8px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:600;
+  font-size:14px; letter-spacing:1px; text-transform:uppercase;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+  -webkit-appearance:none; transition:opacity 0.15s;
+}
+.btn-export:active { opacity:0.7; }
+.btn-export.primary { background:rgba(29,184,122,0.15); border-color:var(--green); color:var(--green); }
+.btn-export.danger  { background:rgba(227,24,55,0.1);   border-color:var(--red);   color:var(--red); }
+
+/* ── SETTINGS ── */
+.settings-group {
+  background:var(--navy); border:1px solid var(--track);
+  border-radius:10px; overflow:hidden; margin-bottom:18px;
+}
+.settings-group-title {
+  font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:13px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--muted); padding:10px 14px;
+  border-bottom:1px solid var(--track);
+  background: rgba(240,165,0,0.05);
+}
+.setting-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px; border-bottom:1px solid var(--track); gap:12px;
+}
+.setting-row:last-child { border-bottom:none; }
+.setting-label { font-size:14px; font-weight:500; }
+.setting-sub   { font-size:11px; color:var(--muted); margin-top:2px; }
+.setting-input {
+  background:var(--steel); border:1px solid var(--track);
+  color:var(--gold); padding:8px 12px; border-radius:6px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:18px; width:110px; text-align:right;
+  outline:none; -webkit-appearance:none;
+  transition:border-color 0.2s;
+}
+.setting-input:focus { border-color:var(--gold); }
+.btn-save-settings {
+  width:100%; background:var(--green); color:#fff; border:none;
+  padding:14px; border-radius:10px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:18px; letter-spacing:2px; text-transform:uppercase;
+  cursor:pointer; -webkit-appearance:none; transition:opacity 0.15s;
+}
+.btn-save-settings:active { opacity:0.75; }
+.settings-note {
+  margin-top:16px; padding:12px 14px;
+  background:var(--navy); border:1px solid var(--track);
+  border-left:3px solid var(--gold); border-radius:6px;
+  font-size:11px; color:var(--muted); line-height:1.7;
+}
+.settings-note strong { color:var(--gold); }
+
+/* ── FOOTER NOTE ── */
+.footer-note {
+  margin-top:20px; padding:12px 14px;
+  background:var(--navy); border:1px solid var(--track);
+  border-left:3px solid var(--gold); border-radius:6px;
+  font-size:11px; color:var(--muted); line-height:1.7;
+}
+.footer-note strong { color:var(--gold); }
+
+/* ── EDIT MODAL ── */
+.modal-overlay {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,0.7);
+  z-index:300; display:none;
+  align-items:center; justify-content:center;
+  padding:20px;
+}
+.modal-overlay.open { display:flex; }
+.modal {
+  background:var(--navy); border:1px solid var(--track);
+  border-top:3px solid var(--gold);
+  border-radius:12px; padding:20px; width:100%; max-width:480px;
+  max-height:90vh; overflow-y:auto;
+}
+.modal-title {
+  font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:18px; letter-spacing:1px; text-transform:uppercase;
+  color:var(--gold); margin-bottom:16px;
+}
+.modal-actions { display:flex; gap:10px; margin-top:16px; }
+.btn-modal {
+  flex:1; padding:12px; border-radius:8px; border:none;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:16px; letter-spacing:1px; text-transform:uppercase;
+  cursor:pointer; -webkit-appearance:none;
+}
+.btn-modal.save   { background:var(--green); color:#fff; }
+.btn-modal.cancel { background:var(--steel); color:var(--light); border:1px solid var(--track); }
+.btn-modal:active { opacity:0.75; }
+
+/* ── TOAST ── */
+.toast {
+  position:fixed; bottom:calc(70px + var(--sab)); left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--green); color:#fff;
+  padding:11px 22px; border-radius:50px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:600;
+  font-size:15px; letter-spacing:1px; z-index:400;
+  transition:transform 0.3s ease; white-space:nowrap; pointer-events:none;
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ── INSTALL BANNER ── */
+#installBanner {
+  background:var(--steel); border:1px solid var(--gold);
+  border-radius:10px; padding:10px 12px; margin-bottom:14px;
+  display:flex; align-items:center; gap:10px; font-size:12px;
+}
+#installBanner .ib-text { flex:1; line-height:1.5; }
+#installBanner .ib-text strong { color:var(--gold); display:block; }
+#installBanner .ib-close {
+  background:none; border:none; color:var(--muted);
+  font-size:22px; cursor:pointer; padding:0; line-height:1;
+}
+
+
+/* ── YEAR CARDS ── */
+.year-card {
+  background: var(--navy); border: 1px solid var(--track);
+  border-radius: 10px; padding: 16px;
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 10px; cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.year-card:active { background: var(--steel); }
+.year-card.current { border-color: var(--gold); }
+.year-card.current::before { display:none; }
+.year-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800; font-size: 32px; color: var(--gold);
+  line-height: 1; flex-shrink: 0; min-width: 60px;
+}
+.year-stats { flex: 1; }
+.year-stat-row { font-size: 13px; color: var(--light); font-weight: 500; }
+.year-stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.year-badge-pill {
+  background: var(--red); color: #fff;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 11px; letter-spacing: 1px;
+  padding: 3px 8px; border-radius: 4px; text-transform: uppercase;
+  flex-shrink: 0;
+}
+.year-badge-pill.active-year { background: var(--gold); color: var(--dark); }
+.year-open-btn {
+  background: var(--steel); border: 1px solid var(--track);
+  color: var(--light); border-radius: 6px; padding: 6px 12px;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+  font-size: 13px; cursor: pointer; white-space: nowrap;
+}
+
+/* Active year indicator in header */
+.active-year-indicator {
+  font-size: 11px; color: var(--gold); margin-top: 3px;
+  font-weight: 600; letter-spacing: 0.5px;
+}
+
+
+/* ── CHARTS ── */
+.chart-box {
+  background: var(--navy); border: 1px solid var(--track);
+  border-radius: 10px; padding: 14px; position: relative;
+  min-height: 120px;
+}
+.chart-empty {
+  position: absolute; inset: 0; display: flex;
+  align-items: center; justify-content: center;
+  color: var(--muted); font-size: 13px; text-align: center;
+  padding: 20px;
+}
+canvas { width: 100% !important; display: block; }
+
+
+/* ── LEG HEADERS ── */
+.leg-header {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 12px; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 7px 10px;
+  margin: 10px -16px 8px; border-radius: 0;
+  background: rgba(227,24,55,0.12); color: var(--red);
+  border-left: 3px solid var(--red);
+}
+.leg-header.leg2 { background: rgba(29,184,122,0.1); color: var(--green); border-left-color: var(--green); }
+
+/* ── LIVE DURATION DISPLAY ── */
+.live-duration {
+  background: rgba(227,24,55,0.1); border: 1px solid rgba(227,24,55,0.3);
+  border-radius: 8px; padding: 11px 12px;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+  font-size: 20px; color: var(--red); text-align: center;
+  min-height: 46px; display: flex; align-items: center; justify-content: center;
+  letter-spacing: 0.5px;
+}
+.live-duration.layover {
+  background: rgba(240,165,0,0.1); border-color: rgba(240,165,0,0.3);
+  color: var(--gold);
+}
+.live-duration.leg2dur {
+  background: rgba(29,184,122,0.1); border-color: rgba(29,184,122,0.3);
+  color: var(--green); grid-column: 1/-1;
+}
+.live-duration.has-value { }
+
+
+/* ── CATS IMPORT ── */
+.cats-instructions { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.cats-step { display:flex; align-items:center; gap:12px; background:var(--steel); border-radius:10px; padding:10px 14px; font-size:14px; }
+.cats-step-num { background:var(--gold); color:#000; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex-shrink:0; }
+.cats-upload-area { border:2px dashed var(--track); border-radius:14px; padding:32px 20px; text-align:center; cursor:pointer; margin-bottom:16px; transition:all .2s; }
+.cats-upload-area:active { border-color:var(--gold); background:rgba(240,165,0,0.08); }
+.cats-upload-icon { font-size:40px; margin-bottom:10px; }
+.cats-upload-text { font-weight:700; font-size:16px; margin-bottom:4px; }
+.cats-upload-sub { font-size:13px; color:var(--muted); }
+.cats-progress-bar { background:var(--steel); border-radius:6px; height:8px; margin-bottom:8px; overflow:hidden; }
+.cats-progress-fill { background:var(--gold); height:100%; border-radius:6px; transition:width .3s; width:0%; }
+.cats-progress-text { font-size:13px; color:var(--muted); text-align:center; margin-bottom:12px; }
+.cats-pill { padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700; }
+.cats-pill.green { background:rgba(29,184,122,0.15); color:var(--green); border:1px solid var(--green); }
+.cats-pill.yellow { background:rgba(240,165,0,0.15); color:var(--gold); border:1px solid var(--gold); }
+.cats-pill.red { background:rgba(227,24,55,0.15); color:var(--red); border:1px solid var(--red); }
+.cats-row-ok td { }
+.cats-row-review td { background:rgba(240,165,0,0.07) !important; }
+.cats-row-skip td { background:rgba(227,24,55,0.07) !important; opacity:0.6; }
+.cats-status { font-size:16px; }
+
+.bunkhouse-bar {
+  background: rgba(240,165,0,0.08); border: 1px solid rgba(240,165,0,0.2);
+  border-radius: 6px; padding: 7px 12px; margin: 0 0 4px;
+  font-size: 12px; color: var(--gold); font-weight: 600;
+  text-align: center; letter-spacing: 0.5px;
+}
+
+/* ── SPREADSHEET TAB ── */
+.sheet-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid var(--track); }
+.sheet-table { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 12px; }
+.sheet-table th {
+  background: var(--steel); color: var(--gold);
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+  font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+  padding: 9px 10px; text-align: left; white-space: nowrap;
+  border-bottom: 2px solid var(--track); position: sticky; top: 0;
+}
+.sheet-table td {
+  padding: 9px 10px; border-bottom: 1px solid rgba(42,74,122,0.4);
+  color: var(--light); white-space: nowrap; background: var(--navy);
+}
+.sheet-table tr:nth-child(even) td { background: rgba(13,31,60,0.6); }
+.sheet-table .tot-row td {
+  background: var(--steel) !important; color: var(--gold);
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+  font-size: 13px; border-top: 2px solid var(--gold);
+  position: sticky; bottom: 0;
+}
+.sheet-table .num { text-align: right; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; }
+.sheet-table .green { color: var(--green); }
+
+@keyframes rowIn { from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)} }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ TAB: LOG ══════════════ -->
+<div class="tab active" id="tab-log">
+  <header>
+    <div class="cn-logo">CN</div>
+    <div class="header-text">
+      <h1>Trip Track</h1>
+      <p>Railway Meal Expense Tracker · CRA Simplified · TL2</p>
+      <p class="active-year-indicator" id="active-year-label">Tax Year: 2025</p>
+    </div>
+    <div class="year-badge" id="hdr-year">2025</div>
+  </header>
+
+  <div id="installBanner">
+    <div class="ib-text">
+      <strong>📲 Add to Home Screen</strong>
+      Tap Share ↑ in Safari → "Add to Home Screen"
+    </div>
+    <button class="ib-close" onclick="dismissBanner()">×</button>
+  </div>
+
+  <div class="summary-strip" style="grid-template-columns:repeat(2,1fr);">
+    <div class="card">
+      <div class="card-label">Trips</div>
+      <div class="card-value" id="totalTrips">0</div>
+      <div class="card-sub">logged</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Total Meals</div>
+      <div class="card-value" id="totalMeals">0</div>
+      <div class="card-sub">meals claimed</div>
+    </div>
+    <div class="card gold">
+      <div class="card-label">Gross</div>
+      <div class="card-value" id="totalGross">$0</div>
+      <div class="card-sub">meal total</div>
+    </div>
+    <div class="card green">
+      <div class="card-label">Deductible</div>
+      <div class="card-value" id="totalDeduct">$0</div>
+      <div class="card-sub">Line 22900</div>
+    </div>
+  </div>
+
+  <div class="rate-banner" id="rateBanner">
+    <div class="rate-item"><div class="rate-dot"></div><strong id="rb-rate">$23/meal</strong></div>
+    <div class="rate-item"><div class="rate-dot"></div><span>1 meal per 4 hrs</span></div>
+    <div class="rate-item"><div class="rate-dot"></div><span>Max</span><strong id="rb-max">3/day</strong></div>
+    <div class="rate-item"><div class="rate-dot"></div><strong id="rb-deduct">50% deductible</strong></div>
+  </div>
+
+  <div class="section-title">Log a Trip</div>
+  <div class="add-form">
+    <!-- LEG 1 -->
+    <div class="leg-header leg1">🚂 LEG 1 — Smithers → Rupert</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Departure Date</label>
+        <input type="date" id="f-depdate">
+      </div>
+      <div class="form-group">
+        <label>Depart Smithers (On Duty)</label>
+        <button class="time-input-btn" id="btn-deptime" onclick="openPicker('dep')">
+          <span id="deptime-display" class="placeholder">Select time</span>
+          <span>🕐</span>
+        </button>
+      </div>
+      <div class="form-group">
+        <label>Arrive Rupert (Off Duty)</label>
+        <button class="time-input-btn" id="btn-arr-dest" onclick="openPicker('arr-dest')">
+          <span id="arr-dest-display" class="placeholder">Select time</span>
+          <span>🕐</span>
+        </button>
+      </div>
+      <div class="form-group">
+        <label>Leg 1 Duration</label>
+        <div class="live-duration" id="live-leg1">—</div>
+      </div>
+    </div>
+
+    <!-- LAYOVER BAR -->
+    <div class="bunkhouse-bar" id="bunkhouseBar">
+      🛏 Layover / Bunkhouse: <span id="live-bunkhouse">—</span>
+    </div>
+
+    <!-- LEG 2 -->
+    <div class="leg-header leg2">🚂 LEG 2 — Rupert → Smithers</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Depart Rupert (On Duty)</label>
+        <button class="time-input-btn" id="btn-dep-dest" onclick="openPicker('dep-dest')">
+          <span id="dep-dest-display" class="placeholder">Select time</span>
+          <span>🕐</span>
+        </button>
+      </div>
+      <div class="form-group">
+        <label>Return Date</label>
+        <input type="date" id="f-retdate">
+      </div>
+      <div class="form-group">
+        <label>Arrive Smithers (Off Duty)</label>
+        <button class="time-input-btn" id="btn-rettime" onclick="openPicker('ret')">
+          <span id="rettime-display" class="placeholder">Select time</span>
+          <span>🕐</span>
+        </button>
+      </div>
+      <div class="form-group">
+        <label>Leg 2 Duration</label>
+        <div class="live-duration leg2dur" id="live-leg2">—</div>
+      </div>
+    </div>
+
+    <!-- ROUTE & NOTES -->
+    <div class="leg-header" style="background:rgba(42,74,122,0.3);color:var(--muted);">📋 Route &amp; Notes</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Origin</label>
+        <input type="text" id="f-origin" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Destination</label>
+        <input type="text" id="f-dest" autocomplete="off">
+      </div>
+      <div class="form-group full">
+        <label>Notes / Trip #</label>
+        <input type="text" id="f-notes" placeholder="Optional" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="calc-explainer" id="calcExplainer">
+      Enter departure &amp; return date/time — meals calculate automatically.
+    </div>
+
+    <div class="meal-preview">
+      <div class="meal-preview-col">
+        <div class="mp-label">Hours</div>
+        <div class="mp-val" id="prev-hours">—</div>
+        <div class="mp-sub">away</div>
+      </div>
+      <div class="meal-preview-col">
+        <div class="mp-label">Meals</div>
+        <div class="mp-val gold" id="prev-meals">—</div>
+        <div class="mp-sub">CRA max</div>
+      </div>
+      <div class="meal-preview-col">
+        <div class="mp-label">Gross</div>
+        <div class="mp-val gold" id="prev-gross">—</div>
+        <div class="mp-sub">meal total</div>
+      </div>
+      <div class="meal-preview-col">
+        <div class="mp-label">Deductible</div>
+        <div class="mp-val green" id="prev-deduct">—</div>
+        <div class="mp-sub">your claim</div>
+      </div>
+    </div>
+
+    <div class="meal-preview" style="margin-top:8px;">
+      <div class="meal-preview-col">
+        <div class="mp-label">Leg 1</div>
+        <div class="mp-val" id="prev-leg1">—</div>
+        <div class="mp-sub">on duty</div>
+      </div>
+      <div class="meal-preview-col">
+        <div class="mp-label">Bunkhouse</div>
+        <div class="mp-val" id="prev-bunk">—</div>
+        <div class="mp-sub">rest time</div>
+      </div>
+      <div class="meal-preview-col">
+        <div class="mp-label">Leg 2</div>
+        <div class="mp-val" id="prev-leg2">—</div>
+        <div class="mp-sub">on duty</div>
+      </div>
+      <div class="meal-preview-col">
+        <div class="mp-label">On Duty</div>
+        <div class="mp-val green" id="prev-onduty">—</div>
+        <div class="mp-sub">total hrs</div>
+      </div>
+    </div>
+
+    <button class="btn-add" onclick="addTrip()">+ Add Trip</button>
+  </div>
+
+  <div class="section-title">Trip Log</div>
+  <div class="trip-list" id="tripList">
+    <div class="empty-state" id="emptyState">
+      <div class="icon">🚂</div>
+      <p>No trips yet. Enter your departure and return times above.</p>
+    </div>
+  </div>
+
+  <div class="export-bar">
+    <button class="btn-export primary wide" onclick="exportSummary()">📋 Copy TL2 Summary</button>
+    <button class="btn-export" onclick="exportCSV()">📄 Export CSV</button>
+    <button class="btn-export" onclick="exportPDF()" style="color:var(--gold);border-color:var(--gold);background:rgba(240,165,0,0.1);">📑 Export PDF</button>
+    <button class="btn-export" onclick="exportJSON()" style="color:var(--muted);border-color:var(--track);">💾 Backup Data</button>
+    <button class="btn-export" onclick="importJSON()" style="color:var(--muted);border-color:var(--track);">📥 Restore Backup</button>
+    <button class="btn-export danger" onclick="clearAll()">🗑 Clear All</button>
+  </div>
+  <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(event)">
+
+  <div class="footer-note">
+    <strong>CRA rule:</strong> 1 meal per 4 hrs, max 3 per 24-hr period from departure.
+    Typical 36-hr trip = <strong>4 meals</strong>. Keep log with <strong>TL2 &amp; T2200</strong>. Claim on <strong>Line 22900</strong>. Retain 6 years.
+  </div>
+</div>
+
+<!-- ══════════════ TAB: SETTINGS ══════════════ -->
+<div class="tab" id="tab-settings">
+  <header>
+    <div class="cn-logo">CN</div>
+    <div class="header-text">
+      <h1>Settings</h1>
+      <p>Adjust rates and defaults</p>
+    </div>
+    <div class="year-badge" id="settings-year">2025</div>
+  </header>
+
+  <div class="settings-group">
+    <div class="settings-group-title">CRA Meal Rates</div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Meal Rate</div>
+        <div class="setting-sub">CRA simplified flat rate per meal</div>
+      </div>
+      <input class="setting-input" type="number" id="s-rate" min="1" max="100" step="0.25">
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Max Meals / Day</div>
+        <div class="setting-sub">Maximum meals per 24-hr period</div>
+      </div>
+      <input class="setting-input" type="number" id="s-maxmeals" min="1" max="6" step="1">
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Deductible %</div>
+        <div class="setting-sub">Railway employee deduction rate</div>
+      </div>
+      <input class="setting-input" type="number" id="s-deduct" min="1" max="100" step="1">
+    </div>
+  </div>
+
+  <div class="settings-group">
+    <div class="settings-group-title">Trip Defaults</div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Default Origin</div>
+        <div class="setting-sub">Pre-filled origin city</div>
+      </div>
+      <input class="setting-input" type="text" id="s-origin" style="font-size:13px;width:150px;text-align:left;color:var(--light);">
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Default Destination</div>
+        <div class="setting-sub">Pre-filled destination city</div>
+      </div>
+      <input class="setting-input" type="text" id="s-dest" style="font-size:13px;width:150px;text-align:left;color:var(--light);">
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Default Trip Duration</div>
+        <div class="setting-sub">Hours auto-filled on return time</div>
+      </div>
+      <input class="setting-input" type="number" id="s-duration" min="4" max="168" step="1">
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Tax Year</div>
+        <div class="setting-sub">Shown on summaries and exports</div>
+      </div>
+      <input class="setting-input" type="number" id="s-year" min="2020" max="2099" step="1">
+    </div>
+  </div>
+
+  <!-- API KEY -->
+  <div class="section-title" style="margin-top:16px;">CATS Screenshot Import</div>
+  <div class="settings-group">
+    <div class="setting-row">
+      <label>Anthropic API Key</label>
+      <input class="setting-input" type="password" id="s-apikey" placeholder="sk-ant-..." style="font-size:12px;width:180px;text-align:left;color:var(--light);">
+    </div>
+  </div>
+  <div class="settings-note" style="margin-bottom:12px;">
+    Get a free key at <strong>console.anthropic.com</strong> → API Keys. Stored only on your device, never shared.
+  </div>
+
+  <button class="btn-save-settings" onclick="saveSettings()">Save Settings</button>
+
+  <div class="settings-note">
+    <strong>Note:</strong> The CRA reviews the simplified meal rate every few years. Check
+    <strong>canada.ca</strong> for the latest rates before filing. Changes saved here apply
+    to all future trips — existing logged trips are not recalculated.
+  </div>
+</div>
+
+
+<!-- ══════════════ TAB: YEARS ══════════════ -->
+<div class="tab" id="tab-years">
+  <header>
+    <div class="cn-logo">CN</div>
+    <div class="header-text">
+      <h1>Tax Books</h1>
+      <p>All years · tap a year to open it</p>
+    </div>
+  </header>
+
+  <div class="section-title">Your Books</div>
+  <div id="yearsList"></div>
+
+  <div style="margin-top:16px;">
+    <button class="btn-add" onclick="createNewYear()" style="font-size:15px;padding:13px;">+ New Tax Year</button>
+  </div>
+</div>
+
+
+<!-- ══════════════ TAB: DATA ══════════════ -->
+<div class="tab" id="tab-data">
+  <header>
+    <div class="cn-logo">CN</div>
+    <div class="header-text">
+      <h1>Data</h1>
+      <p id="data-year-label">Tax Year: 2025</p>
+    </div>
+  </header>
+
+  <div class="summary-strip" style="grid-template-columns:repeat(2,1fr);margin-bottom:14px;">
+    <div class="card">
+      <div class="card-label">Total Away Time</div>
+      <div class="card-value" id="d-away">—</div>
+      <div class="card-sub">hrs from home terminal</div>
+    </div>
+    <div class="card gold">
+      <div class="card-label">Total On Duty</div>
+      <div class="card-value" id="d-onduty">—</div>
+      <div class="card-sub">combined both legs</div>
+    </div>
+    <div class="card green">
+      <div class="card-label">Avg Trip Duration</div>
+      <div class="card-value" id="d-avg">—</div>
+      <div class="card-sub">hrs per trip</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Total Bunkhouse</div>
+      <div class="card-value" id="d-bunkhouse">—</div>
+      <div class="card-sub">rest time at destination</div>
+    </div>
+  </div>
+
+  <!-- WRAPPED BUTTON -->
+  <button onclick="showWrapped()" style="width:100%;margin-bottom:18px;padding:14px;background:linear-gradient(135deg,#1a0a2e,#2d1b4e,#1a0a2e);border:2px solid #a855f7;border-radius:14px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:2px;cursor:pointer;">
+    ✨ GENERATE YEAR WRAPPED
+  </button>
+
+  <div class="section-title">Departure Time Heatmap</div>
+  <div class="chart-box" id="heatmapBox">
+    <canvas id="heatmapCanvas"></canvas>
+    <div class="chart-empty" id="heatmapEmpty">Log trips to see your departure pattern</div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;">Trips by Month</div>
+  <div class="chart-box" id="monthBox">
+    <canvas id="monthCanvas"></canvas>
+    <div class="chart-empty" id="monthEmpty">Log trips to see monthly breakdown</div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;">Busiest Days of Week</div>
+  <div class="chart-box" id="dowBox">
+    <canvas id="dowCanvas"></canvas>
+    <div class="chart-empty" id="dowEmpty">Log trips to see day of week pattern</div>
+  </div>
+</div>
+
+
+<!-- ══════════════ TAB: SHEET ══════════════ -->
+<div class="tab" id="tab-sheet">
+  <header>
+    <div class="cn-logo">CN</div>
+    <div class="header-text">
+      <h1>Review</h1>
+      <p id="sheet-year-label">Tax Year: 2025</p>
+    </div>
+  </header>
+  <div id="sheetSummary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;"></div>
+  <div class="section-title">All Trips</div>
+  <div class="sheet-wrap">
+    <table class="sheet-table" id="sheetTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Dep Date</th>
+          <th>Dep Time</th>
+          <th>Ret Date</th>
+          <th>Ret Time</th>
+          <th>Away (h)</th>
+          <th>On Duty (h)</th>
+          <th>Bunkhouse (h)</th>
+          <th>Meals</th>
+          <th>Gross ($)</th>
+          <th>Deductible ($)</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="sheetBody"></tbody>
+      <tfoot id="sheetFoot"></tfoot>
+    </table>
+  </div>
+  <div class="empty-state" id="sheetEmpty" style="display:none;">
+    <div class="icon">📋</div>
+    <p>No trips logged yet.</p>
+  </div>
+</div>
+
+
+<!-- ══════════════ TAB: CATS IMPORT ══════════════ -->
+<div class="tab" id="tab-cats">
+  <header>
+    <div class="cn-logo" style="background:var(--gold);color:#000;">✏️</div>
+    <div class="header-text">
+      <h1>Quick Entry</h1>
+      <p>Bulk import trips — one per line</p>
+    </div>
+  </header>
+
+  <!-- FORMAT HINT -->
+  <div class="cats-instructions">
+    <div class="cats-step"><span class="cats-step-num">1</span><span>One trip per line — type what you know, skip what you don't</span></div>
+    <div class="cats-step"><span class="cats-step-num">2</span><span>Format: <code style="color:var(--gold);font-size:12px;">MM/DD HHMM MM/DD HHMM TrainID</code></span></div>
+    <div class="cats-step"><span class="cats-step-num">3</span><span>Example: <code style="color:var(--muted);font-size:12px;">01/02 1550 01/03 0115 Q199</code></span></div>
+  </div>
+
+  <!-- ENTRY BOX -->
+  <textarea id="quickEntryArea"
+    placeholder="01/02 1550 01/03 0115 Q199&#10;01/05 1815 01/06 0605 U753&#10;01/15 1015 01/15 2100&#10;&#10;One trip per line. Press Enter for next trip."
+    style="width:100%;height:220px;background:var(--steel);border:2px solid var(--track);border-radius:14px;color:var(--light);font-family:monospace;font-size:14px;padding:14px;resize:vertical;margin-bottom:10px;line-height:1.8;"
+    onkeydown="quickEntryKey(event)"></textarea>
+
+  <!-- SCREENSHOT MODE -->
+  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+    <button onclick="parseQuickEntry()" style="flex:1;padding:14px;background:var(--gold);border:none;border-radius:12px;color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:1px;cursor:pointer;">🔍 PARSE</button>
+    <button onclick="document.getElementById('catsFileInput').click()" style="padding:14px 16px;background:var(--steel);border:1px solid var(--track);border-radius:12px;color:var(--muted);font-size:20px;cursor:pointer;" title="Import from screenshots">📷</button>
+    <input type="file" id="catsFileInput" accept="image/*" multiple style="display:none" onchange="handleCatsImages(event)">
+  </div>
+
+  <!-- RESULTS PREVIEW -->
+  <div id="catsResults" style="display:none;">
+    <div class="section-title" style="margin-top:4px;">
+      Parsed Trips <span id="catsResultCount" style="color:var(--muted);font-size:13px;"></span>
+    </div>
+    <div id="catsSummaryPills" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"></div>
+    <div class="sheet-wrap" style="margin-bottom:12px;">
+      <table class="sheet-table" id="catsPreviewTable">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Dep</th>
+            <th>Time</th>
+            <th>Train</th>
+            <th>Ret</th>
+            <th>Time</th>
+            <th>Train</th>
+            <th>Hrs</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody id="catsPreviewBody"></tbody>
+      </table>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;">
+      <button class="btn-export danger" onclick="resetCatsImport()">✕ Cancel</button>
+      <button class="btn-export primary" id="catsImportBtn" onclick="confirmCatsImport()" style="background:var(--green);border-color:var(--green);color:#fff;">✓ Import</button>
+    </div>
+  </div>
+
+  <div class="empty-state" id="catsEmpty">
+    <div class="icon">✏️</div>
+    <p>Type your trips above — one per line — then tap Parse.</p>
+  </div>
+</div>
+
+
+<!-- ══════════════ WRAPPED OVERLAY ══════════════ -->
+<div id="wrappedOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:500;background:#0a0f1a;overflow-y:auto;padding:20px 16px 100px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <button onclick="closeWrapped()" style="background:none;border:1px solid var(--track);color:var(--muted);padding:8px 14px;border-radius:8px;font-size:14px;">✕ Close</button>
+    <button onclick="shareWrapped()" style="background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;color:#fff;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:700;">📸 Save Image</button>
+  </div>
+  <canvas id="wrappedCanvas" style="width:100%;border-radius:20px;display:block;"></canvas>
+  <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:12px;">Screenshot this card to share with your crew 🚂</p>
+</div>
+
+<!-- ══════════════ BOTTOM NAV ══════════════ -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-log" onclick="switchTab('log')">
+    <span class="nav-icon">🚂</span>
+    <span>Log</span>
+  </button>
+  <button class="nav-btn" id="nav-sheet" onclick="switchTab('sheet')">
+    <span class="nav-icon">📋</span>
+    <span>Review</span>
+  </button>
+  <button class="nav-btn" id="nav-data" onclick="switchTab('data')">
+    <span class="nav-icon">📊</span>
+    <span>Data</span>
+  </button>
+  <button class="nav-btn" id="nav-years" onclick="switchTab('years')">
+    <span class="nav-icon">📚</span>
+    <span>Books</span>
+  </button>
+  <button class="nav-btn" id="nav-cats" onclick="switchTab('cats')">
+    <span class="nav-icon">📷</span>
+    <span>Import</span>
+  </button>
+  <button class="nav-btn" id="nav-settings" onclick="switchTab('settings')">
+    <span class="nav-icon">⚙️</span>
+    <span>Settings</span>
+  </button>
+</nav>
+
+<!-- ══════════════ TIME PICKER ══════════════ -->
+<div class="picker-overlay" id="pickerOverlay" onclick="overlayClick(event)">
+  <div class="picker-sheet">
+    <div class="picker-header">
+      <span class="picker-title" id="pickerTitle">Departure Time</span>
+      <button class="picker-done" onclick="confirmPicker()">Done</button>
+    </div>
+    <div class="picker-drums">
+      <div class="drum-wrap">
+        <div class="drum" id="drum-hour" onscroll="onDrumScroll('hour')"></div>
+      </div>
+      <div class="picker-sep">:</div>
+      <div class="drum-wrap">
+        <div class="drum" id="drum-min" onscroll="onDrumScroll('min')"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ EDIT MODAL ══════════════ -->
+<div class="modal-overlay" id="editModal" onclick="editOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title">Edit Trip</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Departure Date</label>
+        <input type="date" id="e-depdate">
+      </div>
+      <div class="form-group">
+        <label>Departure Time</label>
+        <button class="time-input-btn" id="btn-e-deptime" onclick="openPicker('e-dep')">
+          <span id="e-deptime-display" class="placeholder">Select time</span>
+          <span>🕐</span>
+        </button>
+      </div>
+      <div class="form-group">
+        <label>Return Date</label>
+        <input type="date" id="e-retdate">
+      </div>
+      <div class="form-group">
+        <label>Return Time</label>
+        <button class="time-input-btn" id="btn-e-rettime" onclick="openPicker('e-ret')">
+          <span id="e-rettime-display" class="placeholder">Select time</span>
+          <span>🕐</span>
+        </button>
+      </div>
+      <div class="form-group full" style="margin-top:4px;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);font-weight:700;padding:6px 0 2px;border-top:1px solid var(--track);">At Destination</div>
+      </div>
+      <div class="form-group">
+        <label>Arrive Rupert (Off Duty)</label>
+        <button class="time-input-btn" id="btn-e-arr-dest" onclick="openPicker('e-arr-dest')">
+          <span id="e-arr-dest-display" class="placeholder">Select time</span>
+          <span>🕐</span>
+        </button>
+      </div>
+      <div class="form-group">
+        <label>Depart Rupert (On Duty)</label>
+        <button class="time-input-btn" id="btn-e-dep-dest" onclick="openPicker('e-dep-dest')">
+          <span id="e-dep-dest-display" class="placeholder">Select time</span>
+          <span>🕐</span>
+        </button>
+      </div>
+      <div class="form-group full" style="margin-top:4px;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);font-weight:700;padding:6px 0 2px;border-top:1px solid var(--track);">Route</div>
+      </div>
+      <div class="form-group">
+        <label>Origin</label>
+        <input type="text" id="e-origin" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Destination</label>
+        <input type="text" id="e-dest" autocomplete="off">
+      </div>
+      <div class="form-group full">
+        <label>Notes / Trip #</label>
+        <input type="text" id="e-notes" autocomplete="off">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal cancel" onclick="closeEdit()">Cancel</button>
+      <button class="btn-modal save"   onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── SERVICE WORKER ────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+// ── SETTINGS ─────────────────────────────────────────────────────────────
+const DEFAULT_SETTINGS = {
+  rate:     23.00,
+  maxMeals: 3,
+  deduct:   50,
+  origin:   'Smithers, BC',
+  dest:     'Prince Rupert, BC',
+  duration: 36,
+  year:     new Date().getFullYear()
+};
+
+let cfg = DEFAULT_SETTINGS;
+try {
+  const saved = JSON.parse(localStorage.getItem('cn_settings') || 'null');
+  if (saved) cfg = { ...DEFAULT_SETTINGS, ...saved };
+} catch(e) {}
+
+function saveCfg() { localStorage.setItem('cn_settings', JSON.stringify(cfg)); }
+
+function loadSettingsUI() {
+  document.getElementById('s-rate').value     = cfg.rate;
+  document.getElementById('s-maxmeals').value = cfg.maxMeals;
+  document.getElementById('s-deduct').value   = cfg.deduct;
+  document.getElementById('s-origin').value   = cfg.origin;
+  document.getElementById('s-dest').value     = cfg.dest;
+  document.getElementById('s-duration').value = cfg.duration;
+  document.getElementById('s-year').value     = cfg.year;
+  document.getElementById('s-apikey').value   = cfg.apiKey || '';
+}
+
+function saveSettings() {
+  cfg.rate     = parseFloat(document.getElementById('s-rate').value)     || 23;
+  cfg.maxMeals = parseInt(document.getElementById('s-maxmeals').value)   || 3;
+  cfg.deduct   = parseFloat(document.getElementById('s-deduct').value)   || 50;
+  cfg.origin   = document.getElementById('s-origin').value.trim()        || 'Smithers, BC';
+  cfg.dest     = document.getElementById('s-dest').value.trim()          || 'Prince Rupert, BC';
+  cfg.duration = parseInt(document.getElementById('s-duration').value)   || 36;
+  cfg.year     = parseInt(document.getElementById('s-year').value)       || new Date().getFullYear();
+  cfg.apiKey   = document.getElementById('s-apikey').value.trim();
+  saveCfg();
+  applySettings();
+  showToast('Settings saved ✓');
+}
+
+function applySettings() {
+  // Update rate banner
+  document.getElementById('rb-rate').textContent   = `$${cfg.rate}/meal`;
+  document.getElementById('rb-max').textContent    = `${cfg.maxMeals}/day`;
+  document.getElementById('rb-deduct').textContent = `${cfg.deduct}% deductible`;
+  document.getElementById('hdr-year').textContent  = cfg.year;
+  document.getElementById('settings-year').textContent = cfg.year;
+  // Always pre-fill defaults
+  document.getElementById('f-origin').value = cfg.origin;
+  document.getElementById('f-dest').value   = cfg.dest;
+  updateCalc();
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'settings') loadSettingsUI();
+  if (name === 'years') renderYears();
+  if (name === 'data') renderData();
+  if (name === 'sheet') renderSheet();
+  if (name === 'cats') initCatsTab();
+}
+
+// ── INSTALL BANNER ────────────────────────────────────────────────────────
+const isStandalone = navigator.standalone || matchMedia('(display-mode:standalone)').matches;
+if (isStandalone || localStorage.getItem('cn_banner_dismissed')) {
+  document.getElementById('installBanner').style.display = 'none';
+}
+function dismissBanner() {
+  localStorage.setItem('cn_banner_dismissed','1');
+  document.getElementById('installBanner').style.display = 'none';
+}
+
+// ── MULTI-YEAR TRIPS ──────────────────────────────────────────────────────
+// Trips stored per year: cn_trips_YYYY
+// activeYear = which year is currently being logged/viewed in the Log tab
+
+let activeYear = new Date().getFullYear();
+let trips = [];
+
+function tripsKey(yr) { return 'cn_trips_' + yr; }
+
+function loadTripsForYear(yr) {
+  try { return JSON.parse(localStorage.getItem(tripsKey(yr)) || '[]'); } catch(e) { return []; }
+}
+
+function saveTrips() {
+  localStorage.setItem(tripsKey(activeYear), JSON.stringify(trips));
+}
+
+// Legacy migration: move old cn_rail_v3 into current year
+(function migrateLegacy() {
+  const old = localStorage.getItem('cn_rail_v3');
+  if (old) {
+    try {
+      const arr = JSON.parse(old);
+      if (arr.length) {
+        const existing = loadTripsForYear(activeYear);
+        const merged = [...arr, ...existing].filter((t,i,a) => a.findIndex(x=>x.id===t.id)===i);
+        localStorage.setItem(tripsKey(activeYear), JSON.stringify(merged));
+      }
+    } catch(e) {}
+    localStorage.removeItem('cn_rail_v3');
+  }
+})();
+
+trips = loadTripsForYear(activeYear);
+
+function setActiveYear(yr) {
+  activeYear = yr;
+  trips = loadTripsForYear(yr);
+  document.getElementById('active-year-label').textContent = 'Tax Year: ' + yr;
+  document.getElementById('hdr-year').textContent = yr;
+  renderTrips();
+  updateCalc();
+  // Reset form date to Jan 1 of that year if it's not current year
+  const today = new Date();
+  if (yr !== today.getFullYear()) {
+    document.getElementById('f-depdate').value = yr + '-01-01';
+  } else {
+    document.getElementById('f-depdate').value = today.toISOString().split('T')[0];
+  }
+  autoFillReturn();
+}
+
+function getAllYears() {
+  const years = new Set();
+  years.add(new Date().getFullYear()); // always include current
+  years.add(activeYear);
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    const m = k && k.match(/^cn_trips_(\d{4})$/);
+    if (m) years.add(parseInt(m[1]));
+  }
+  return [...years].sort((a,b) => b - a); // newest first
+}
+
+function createNewYear() {
+  const input = prompt('Enter tax year (e.g. 2024):');
+  if (!input) return;
+  const yr = parseInt(input);
+  if (isNaN(yr) || yr < 2020 || yr > 2099) { showToast('Invalid year', true); return; }
+  // Create empty book if not exists
+  if (!localStorage.getItem(tripsKey(yr))) {
+    localStorage.setItem(tripsKey(yr), JSON.stringify([]));
+  }
+  setActiveYear(yr);
+  renderYears();
+  switchTab('log');
+  showToast('Opened ' + yr + ' tax book ✓');
+}
+
+function openYear(yr) {
+  setActiveYear(yr);
+  renderYears();
+  switchTab('log');
+  showToast('Opened ' + yr + ' tax book ✓');
+}
+
+function deleteYear(yr) {
+  if (!confirm('Delete the entire ' + yr + ' tax book? This cannot be undone.')) return;
+  localStorage.removeItem(tripsKey(yr));
+  if (activeYear === yr) {
+    const remaining = getAllYears().filter(y => y !== yr);
+    setActiveYear(remaining.length ? remaining[0] : new Date().getFullYear());
+  }
+  renderYears();
+  showToast(yr + ' book deleted');
+}
+
+function renderYears() {
+  const list = document.getElementById('yearsList');
+  if (!list) return;
+  list.innerHTML = '';
+  const years = getAllYears();
+  if (!years.length) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">📚</div><p>No tax books yet.</p></div>';
+    return;
+  }
+  years.forEach(yr => {
+    const yTrips = loadTripsForYear(yr);
+    const gross  = yTrips.reduce((s,t) => s+t.gross,  0);
+    const deduct = yTrips.reduce((s,t) => s+t.deduct, 0);
+    const isCurrent = (yr === activeYear);
+
+    const card = document.createElement('div');
+    card.className = 'year-card' + (isCurrent ? ' current' : '');
+    card.innerHTML = `
+      <div class="year-num">${yr}</div>
+      <div class="year-stats">
+        <div class="year-stat-row">${yTrips.length} trip${yTrips.length!==1?'s':''} · $${gross.toFixed(2)} gross</div>
+        <div class="year-stat-sub">$${deduct.toFixed(2)} deductible · Line 22900</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+        ${isCurrent ? '<span class="year-badge-pill active-year">Active</span>' : ''}
+        <button class="year-open-btn" onclick="openYear(${yr});event.stopPropagation()">
+          ${isCurrent ? 'View' : 'Open'}
+        </button>
+        ${yr !== new Date().getFullYear() ? `<button class="year-open-btn" style="color:var(--red);border-color:var(--red);" onclick="deleteYear(${yr});event.stopPropagation()">Delete</button>` : ''}
+      </div>
+    `;
+    card.onclick = () => openYear(yr);
+    list.appendChild(card);
+  });
+}
+
+// keep old save() alias working
+function save() { saveTrips(); }
+
+// ── TIME PICKER ───────────────────────────────────────────────────────────
+let pickerTarget = 'dep';
+let pickerTimes  = { dep:'', ret:'', 'arr-dest':'', 'dep-dest':'', 'e-dep':'', 'e-ret':'', 'e-arr-dest':'', 'e-dep-dest':'' };
+let drumScrollTimers = {};
+
+const HOURS = Array.from({length:24},(_,i)=> String(i).padStart(2,'0'));
+const MINS  = Array.from({length:12},(_,i)=> String(i*5).padStart(2,'0'));
+
+function buildDrums() {
+  buildDrum('drum-hour', HOURS);
+  buildDrum('drum-min',  MINS);
+
+}
+
+function buildDrum(id, items) {
+  const drum = document.getElementById(id);
+  drum.innerHTML = '';
+  items.forEach((v,i) => {
+    const el = document.createElement('div');
+    el.className = 'drum-item';
+    el.textContent = v;
+    el.dataset.index = i;
+    drum.appendChild(el);
+  });
+}
+
+function scrollDrumTo(id, index, smooth) {
+  const drum = document.getElementById(id);
+  drum.scrollTo({ top: index * 44, behavior: smooth ? 'smooth' : 'instant' });
+}
+
+function getSelectedIndex(id) {
+  const drum = document.getElementById(id);
+  return Math.round(drum.scrollTop / 44);
+}
+
+function onDrumScroll(type) {
+  const id = 'drum-' + type;
+  clearTimeout(drumScrollTimers[type]);
+  drumScrollTimers[type] = setTimeout(() => {
+    const drum = document.getElementById(id);
+    const idx  = Math.round(drum.scrollTop / 44);
+    scrollDrumTo(id, idx, true);
+    updateDrumHighlight(id);
+  }, 80);
+  updateDrumHighlight(id);
+}
+
+function updateDrumHighlight(id) {
+  const drum  = document.getElementById(id);
+  const items = drum.querySelectorAll('.drum-item');
+  const sel   = Math.round(drum.scrollTop / 44);
+  items.forEach((el,i) => el.classList.toggle('selected', i === sel));
+}
+
+function timeStringTo24(h24, min) {
+  return h24 + ':' + min;
+}
+
+function time24ToComponents(t24) {
+  if (!t24) return { h:'08', m:'00' };
+  const [hh, mm] = t24.split(':');
+  const mSnap = Math.round(parseInt(mm) / 5) * 5 % 60;
+  return { h: String(parseInt(hh)).padStart(2,'0'), m: String(mSnap).padStart(2,'0') };
+}
+
+function openPicker(target) {
+  pickerTarget = target;
+  const current = pickerTimes[target] || '08:00';
+  const { h, m } = time24ToComponents(current);
+
+  const titles = {
+    'dep':'Depart Smithers (On Duty)', 'ret':'Arrive Smithers (Off Duty)',
+    'arr-dest':'Arrive Rupert (Off Duty)', 'dep-dest':'Depart Rupert (On Duty)',
+    'e-dep':'Depart Smithers (On Duty)', 'e-ret':'Arrive Smithers (Off Duty)',
+    'e-arr-dest':'Arrive Rupert (Off Duty)', 'e-dep-dest':'Depart Rupert (On Duty)'
+  };
+  document.getElementById('pickerTitle').textContent = titles[target] || 'Select Time';
+
+  const hIdx = HOURS.indexOf(h);
+  const mIdx = MINS.indexOf(m);
+
+  scrollDrumTo('drum-hour', hIdx >= 0 ? hIdx : 8, false);
+  scrollDrumTo('drum-min',  mIdx >= 0 ? mIdx : 0, false);
+
+  ['drum-hour','drum-min'].forEach(updateDrumHighlight);
+  document.getElementById('pickerOverlay').classList.add('open');
+}
+
+function confirmPicker() {
+  const hIdx = getSelectedIndex('drum-hour');
+  const mIdx = getSelectedIndex('drum-min');
+
+  const h   = HOURS[Math.min(hIdx, HOURS.length-1)];
+  const m   = MINS [Math.min(mIdx, MINS.length-1)];
+  const t24 = timeStringTo24(h, m);
+  const disp = `${h}:${m}`;
+
+  pickerTimes[pickerTarget] = t24;
+
+  const displayMap = {
+    'dep':       ['deptime-display',      true],
+    'ret':       ['rettime-display',      false],
+    'arr-dest':  ['arr-dest-display',     false],
+    'dep-dest':  ['dep-dest-display',     false],
+    'e-dep':     ['e-deptime-display',    false],
+    'e-ret':     ['e-rettime-display',    false],
+    'e-arr-dest':['e-arr-dest-display',  false],
+    'e-dep-dest':['e-dep-dest-display',  false],
+  };
+  const [dispId, doAutoFill] = displayMap[pickerTarget] || [null, false];
+  if (dispId) {
+    document.getElementById(dispId).textContent = disp;
+    document.getElementById(dispId).classList.remove('placeholder');
+  }
+  if (doAutoFill) autoFillReturn();
+
+  document.getElementById('pickerOverlay').classList.remove('open');
+  updateCalc();
+  updateDutyPreview();
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('pickerOverlay'))
+    document.getElementById('pickerOverlay').classList.remove('open');
+}
+
+function setTimeDisplay(btnId, displayId, t24) {
+  if (!t24) return;
+  const { h, m } = time24ToComponents(t24);
+  const el = document.getElementById(displayId);
+  el.textContent = `${h}:${m}`;
+  el.classList.remove('placeholder');
+}
+
+// ── DATETIME HELPERS ──────────────────────────────────────────────────────
+function getDepDateTime() {
+  const d = document.getElementById('f-depdate').value;
+  const t = pickerTimes['dep'];
+  return (d && t) ? new Date(d + 'T' + t) : null;
+}
+function getRetDateTime() {
+  const d = document.getElementById('f-retdate').value;
+  const t = pickerTimes['ret'];
+  return (d && t) ? new Date(d + 'T' + t) : null;
+}
+
+function autoFillReturn() {
+  const dep = getDepDateTime();
+  if (!dep) return;
+  const ret = new Date(dep.getTime() + cfg.duration * 3600000);
+  document.getElementById('f-retdate').value = ret.toISOString().split('T')[0];
+  pickerTimes['ret'] = ret.toTimeString().slice(0,5);
+  setTimeDisplay('btn-rettime','rettime-display', pickerTimes['ret']);
+  updateCalc();
+}
+
+// ── MEAL CALCULATION ──────────────────────────────────────────────────────
+function calcMaxMeals(totalHours) {
+  if (totalHours < 4) return 0;
+  const slots = [];
+  for (let h = 4; h <= totalHours; h += 4) slots.push(h);
+  const byWindow = {};
+  slots.forEach(s => {
+    const w = Math.floor((s - 0.001) / 24);
+    byWindow[w] = (byWindow[w] || 0) + 1;
+  });
+  return Object.values(byWindow).reduce((sum,c) => sum + Math.min(c, cfg.maxMeals), 0);
+}
+
+function updateCalc() {
+  const dep = getDepDateTime();
+  const ret = getRetDateTime();
+  const ex  = document.getElementById('calcExplainer');
+
+  if (!dep || !ret) {
+    setPreview('—','—','—','—');
+    ex.innerHTML = 'Enter departure &amp; return date/time — meals calculate automatically.';
+    return;
+  }
+  if (ret <= dep) {
+    setPreview('—','—','—','—');
+    ex.innerHTML = '⚠️ Return must be after departure.';
+    return;
+  }
+  const hours  = (ret - dep) / 3600000;
+  const meals  = calcMaxMeals(hours);
+  const gross  = meals * cfg.rate;
+  const deduct = gross * (cfg.deduct / 100);
+
+  setPreview(hours.toFixed(1)+'h', meals, '$'+gross.toFixed(2), '$'+deduct.toFixed(2));
+
+  const fd = Math.floor(hours/24), rh = hours%24;
+  const parts = [];
+  if (fd > 0) parts.push(`${fd}×24hr = max ${fd*cfg.maxMeals} meals`);
+  if (rh >= 4) parts.push(`${rh.toFixed(1)}h = ${Math.min(Math.floor(rh/4),cfg.maxMeals)} meal${Math.min(Math.floor(rh/4),cfg.maxMeals)!==1?'s':''}`);
+
+  ex.innerHTML = meals === 0
+    ? '⚠️ Trip must be at least 4 hours to claim a meal.'
+    : `<strong>${hours.toFixed(1)} hrs</strong> → ${parts.join(', ')} = <strong>${meals} meals × $${cfg.rate} = $${gross.toFixed(2)}</strong> → ${cfg.deduct}% = <strong style="color:var(--green)">$${deduct.toFixed(2)}</strong>`;
+  updateDutyPreview();
+}
+
+function setPreview(h,m,g,d) {
+  document.getElementById('prev-hours').textContent  = h;
+  document.getElementById('prev-meals').textContent  = m;
+  document.getElementById('prev-gross').textContent  = g;
+  document.getElementById('prev-deduct').textContent = d;
+}
+
+function fmtDuration(h) {
+  if (h === null) return '—';
+  const hrs = Math.floor(h);
+  const mins = Math.round((h - hrs) * 60);
+  return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+}
+
+function updateDutyPreview() {
+  const depT    = pickerTimes['dep'];
+  const arrT    = pickerTimes['arr-dest'];
+  const depDT   = pickerTimes['dep-dest'];
+  const retT    = pickerTimes['ret'];
+  const depDate = document.getElementById('f-depdate').value;
+  const retDate = document.getElementById('f-retdate').value;
+
+  let leg1h = null, bunkH = null, leg2h = null;
+  let l1arr = null, bunkDep = null;
+
+  // Leg 1
+  if (depDate && depT && arrT) {
+    const l1dep = new Date(depDate + 'T' + depT);
+    l1arr = new Date(depDate + 'T' + arrT);
+    if (l1arr <= l1dep) l1arr.setDate(l1arr.getDate()+1);
+    leg1h = (l1arr - l1dep)/3600000;
+  }
+
+  // Layover/bunkhouse — populates as soon as dep-dest entered
+  if (l1arr && depDT) {
+    bunkDep = new Date(l1arr.toISOString().split('T')[0] + 'T' + depDT);
+    if (bunkDep <= l1arr) bunkDep.setDate(bunkDep.getDate()+1);
+    bunkH = (bunkDep - l1arr)/3600000;
+  }
+
+  // Leg 2
+  if (bunkDep && retDate && retT) {
+    let l2arr = new Date(retDate + 'T' + retT);
+    if (l2arr <= bunkDep) l2arr.setDate(l2arr.getDate()+1);
+    leg2h = (l2arr - bunkDep)/3600000;
+  }
+
+  // Inline duration displays
+  const el1 = document.getElementById('live-leg1');
+  const elB = document.getElementById('live-bunkhouse');
+  const elLO = null;
+  const el2 = document.getElementById('live-leg2');
+
+  el1.textContent  = fmtDuration(leg1h);
+  elB.textContent  = bunkH !== null ? fmtDuration(bunkH) : '—';
+  if (elLO) elLO.textContent = fmtDuration(bunkH);
+  el2.textContent  = fmtDuration(leg2h);
+
+  // Colour feedback — red if suspiciously short/long
+  [el1, el2].forEach((el, i) => {
+    const h = i === 0 ? leg1h : leg2h;
+    el.style.color = h !== null && (h < 4 || h > 20) ? 'var(--red)' : (i===0?'var(--red)':'var(--green)');
+  });
+  if (elLO) elLO.style.color = bunkH !== null && bunkH < 6 ? 'var(--red)' : 'var(--gold)';
+
+  // Bunkhouse bar opacity
+  document.getElementById('bunkhouseBar').style.opacity = bunkH !== null ? '1' : '0.4';
+
+  // Preview row
+  document.getElementById('prev-leg1').textContent   = leg1h  !== null ? fmtDuration(leg1h)  : '—';
+  document.getElementById('prev-bunk').textContent   = bunkH  !== null ? fmtDuration(bunkH)  : '—';
+  document.getElementById('prev-leg2').textContent   = leg2h  !== null ? fmtDuration(leg2h)  : '—';
+  const onDuty = (leg1h !== null && leg2h !== null) ? leg1h + leg2h : null;
+  document.getElementById('prev-onduty').textContent = onDuty !== null ? fmtDuration(onDuty) : '—';
+}
+
+// ── ADD TRIP ──────────────────────────────────────────────────────────────
+function addTrip() {
+  const dep    = getDepDateTime();
+  const ret    = getRetDateTime();
+  const origin = document.getElementById('f-origin').value.trim();
+  const dest   = document.getElementById('f-dest').value.trim();
+  const notes  = document.getElementById('f-notes').value.trim();
+
+  if (!dep)       { showToast('Enter a departure date & time', true); return; }
+  if (!ret)       { showToast('Enter a return date & time', true); return; }
+  if (ret <= dep) { showToast('Return must be after departure', true); return; }
+  if (!origin)    { showToast('Enter an origin', true); return; }
+  if (!dest)      { showToast('Enter a destination', true); return; }
+
+  const hours  = (ret - dep) / 3600000;
+  const meals  = calcMaxMeals(hours);
+  if (meals === 0) { showToast('Trip must be at least 4 hours', true); return; }
+
+  const gross  = meals * cfg.rate;
+  const deduct = gross * (cfg.deduct / 100);
+
+  // Compute on-duty and bunkhouse if intermediate times provided
+  const arrDestTime = pickerTimes['arr-dest'];
+  const depDestTime = pickerTimes['dep-dest'];
+  const depDate = document.getElementById('f-depdate').value;
+  const retDate = document.getElementById('f-retdate').value;
+
+  let leg1h = null, bunkhouseH = null, leg2h = null, onDutyH = null;
+  if (arrDestTime && depDestTime) {
+    // Leg 1: dep → arr-dest (same day as dep, or next day if arr < dep time)
+    const leg1Dep = new Date(depDate + 'T' + pickerTimes['dep']);
+    let leg1Arr = new Date(depDate + 'T' + arrDestTime);
+    if (leg1Arr <= leg1Dep) leg1Arr.setDate(leg1Arr.getDate() + 1);
+    leg1h = (leg1Arr - leg1Dep) / 3600000;
+
+    // Bunkhouse: arr-dest → dep-dest
+    let bunkDep = new Date(leg1Arr.toISOString().split('T')[0] + 'T' + depDestTime);
+    if (bunkDep <= leg1Arr) bunkDep.setDate(bunkDep.getDate() + 1);
+    bunkhouseH = (bunkDep - leg1Arr) / 3600000;
+
+    // Leg 2: dep-dest → ret
+    let leg2Arr = new Date(retDate + 'T' + pickerTimes['ret']);
+    if (leg2Arr <= bunkDep) leg2Arr.setDate(leg2Arr.getDate() + 1);
+    leg2h = (leg2Arr - bunkDep) / 3600000;
+
+    onDutyH = leg1h + leg2h;
+  }
+
+  trips.unshift({
+    id: Date.now(),
+    depDate,
+    depTime: pickerTimes['dep'],
+    retDate,
+    retTime: pickerTimes['ret'],
+    arrDestTime, depDestTime,
+    origin, dest, notes,
+    hours: +hours.toFixed(1), meals, gross, deduct,
+    rate: cfg.rate, deductPct: cfg.deduct,
+    leg1h: leg1h ? +leg1h.toFixed(2) : null,
+    leg2h: leg2h ? +leg2h.toFixed(2) : null,
+    bunkhouseH: bunkhouseH ? +bunkhouseH.toFixed(2) : null,
+    onDutyH: onDutyH ? +onDutyH.toFixed(2) : null
+  });
+
+  save(); renderTrips();
+  document.getElementById('f-notes').value = '';
+  pickerTimes['ret'] = '';
+  pickerTimes['arr-dest'] = '';
+  pickerTimes['dep-dest'] = '';
+  document.getElementById('rettime-display').textContent = 'Select time';
+  document.getElementById('rettime-display').classList.add('placeholder');
+  document.getElementById('arr-dest-display').textContent = 'Select time';
+  document.getElementById('arr-dest-display').classList.add('placeholder');
+  document.getElementById('dep-dest-display').textContent = 'Select time';
+  document.getElementById('dep-dest-display').classList.add('placeholder');
+  document.getElementById('f-retdate').value = '';
+  autoFillReturn();
+  showToast(`${meals} meals · $${gross.toFixed(2)} gross · $${deduct.toFixed(2)} deductible ✓`);
+}
+
+// ── EDIT TRIP ─────────────────────────────────────────────────────────────
+let editingId = null;
+
+function openEdit(id) {
+  const t = trips.find(x => x.id === id);
+  if (!t) return;
+  editingId = id;
+
+  document.getElementById('e-depdate').value = t.depDate;
+  document.getElementById('e-retdate').value = t.retDate;
+  document.getElementById('e-origin').value  = t.origin;
+  document.getElementById('e-dest').value    = t.dest;
+  document.getElementById('e-notes').value   = t.notes || '';
+
+  pickerTimes['e-dep']      = t.depTime      || '';
+  pickerTimes['e-ret']      = t.retTime      || '';
+  pickerTimes['e-arr-dest'] = t.arrDestTime  || '';
+  pickerTimes['e-dep-dest'] = t.depDestTime  || '';
+  setTimeDisplay('btn-e-deptime',   'e-deptime-display',    t.depTime);
+  setTimeDisplay('btn-e-rettime',   'e-rettime-display',    t.retTime);
+  setTimeDisplay('btn-e-arr-dest',  'e-arr-dest-display',   t.arrDestTime);
+  setTimeDisplay('btn-e-dep-dest',  'e-dep-dest-display',   t.depDestTime);
+
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeEdit() {
+  editingId = null;
+  document.getElementById('editModal').classList.remove('open');
+}
+
+function editOverlayClick(e) {
+  if (e.target === document.getElementById('editModal')) closeEdit();
+}
+
+function saveEdit() {
+  const idx = trips.findIndex(x => x.id === editingId);
+  if (idx === -1) return;
+
+  const depDate = document.getElementById('e-depdate').value;
+  const retDate = document.getElementById('e-retdate').value;
+  const depTime = pickerTimes['e-dep'];
+  const retTime = pickerTimes['e-ret'];
+  const origin  = document.getElementById('e-origin').value.trim();
+  const dest    = document.getElementById('e-dest').value.trim();
+  const notes   = document.getElementById('e-notes').value.trim();
+
+  if (!depDate || !depTime) { showToast('Enter departure date & time', true); return; }
+  if (!retDate || !retTime) { showToast('Enter return date & time', true); return; }
+
+  const dep   = new Date(depDate + 'T' + depTime);
+  const ret   = new Date(retDate + 'T' + retTime);
+  if (ret <= dep) { showToast('Return must be after departure', true); return; }
+
+  const hours  = (ret - dep) / 3600000;
+  const meals  = calcMaxMeals(hours);
+  const gross  = meals * cfg.rate;
+  const deduct = gross * (cfg.deduct / 100);
+
+  const eArrDest = pickerTimes['e-arr-dest'] || null;
+  const eDepDest = pickerTimes['e-dep-dest'] || null;
+  let eLeg1h = null, eBunkhouseH = null, eLeg2h = null, eOnDutyH = null;
+  if (eArrDest && eDepDest) {
+    const l1d = new Date(depDate + 'T' + depTime);
+    let l1a = new Date(depDate + 'T' + eArrDest);
+    if (l1a <= l1d) l1a.setDate(l1a.getDate()+1);
+    eLeg1h = (l1a - l1d)/3600000;
+    let bd = new Date(l1a.toISOString().split('T')[0] + 'T' + eDepDest);
+    if (bd <= l1a) bd.setDate(bd.getDate()+1);
+    eBunkhouseH = (bd - l1a)/3600000;
+    let l2a = new Date(retDate + 'T' + retTime);
+    if (l2a <= bd) l2a.setDate(l2a.getDate()+1);
+    eLeg2h = (l2a - bd)/3600000;
+    eOnDutyH = eLeg1h + eLeg2h;
+  }
+  trips[idx] = { ...trips[idx], depDate, depTime, retDate, retTime,
+    arrDestTime: eArrDest, depDestTime: eDepDest,
+    origin, dest, notes,
+    hours: +hours.toFixed(1), meals, gross, deduct, rate: cfg.rate, deductPct: cfg.deduct,
+    leg1h: eLeg1h?+eLeg1h.toFixed(2):null, leg2h: eLeg2h?+eLeg2h.toFixed(2):null,
+    bunkhouseH: eBunkhouseH?+eBunkhouseH.toFixed(2):null, onDutyH: eOnDutyH?+eOnDutyH.toFixed(2):null };
+
+  save(); renderTrips(); closeEdit();
+  showToast('Trip updated ✓');
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function renderTrips() {
+  const list  = document.getElementById('tripList');
+  const empty = document.getElementById('emptyState');
+  const tg = trips.reduce((s,t)=>s+t.gross,  0);
+  const td = trips.reduce((s,t)=>s+t.deduct, 0);
+  const tm = trips.reduce((s,t)=>s+t.meals,  0);
+  document.getElementById('totalTrips').textContent  = trips.length;
+  document.getElementById('totalMeals').textContent  = tm;
+  document.getElementById('totalGross').textContent  = '$'+tg.toFixed(2);
+  document.getElementById('totalDeduct').textContent = '$'+td.toFixed(2);
+  list.querySelectorAll('.trip-row').forEach(el=>el.remove());
+  empty.style.display = trips.length ? 'none' : '';
+
+  trips.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'trip-row';
+    const dep12 = fmt12(t.depTime), ret12 = fmt12(t.retTime);
+    el.innerHTML = `
+      <div class="trip-main">
+        <div class="trip-date-line">${fmtDate(t.depDate)} → ${fmtDate(t.retDate)}</div>
+        <div class="trip-route">${t.origin} <span class="arrow">↔</span> ${t.dest}</div>
+        <div class="trip-sub">${dep12} – ${ret12}${t.notes?' · '+t.notes:''}</div>
+        <div class="trip-pills">
+          <span class="pill">⏱ ${t.hours}h away</span>
+          ${t.onDutyH ? `<span class="pill">🔧 ${t.onDutyH.toFixed(1)}h on duty</span>` : ''}
+          ${t.bunkhouseH ? `<span class="pill">🛏 ${t.bunkhouseH.toFixed(1)}h bunkhouse</span>` : ''}
+          <span class="pill">🍽 ${t.meals} meal${t.meals!==1?'s':''}</span>
+          <span class="pill">$${t.gross.toFixed(2)}</span>
+        </div>
+      </div>
+      <div class="trip-amount">
+        <div class="trip-gross">${t.deductPct||50}% claim</div>
+        <div class="trip-deduct">$${t.deduct.toFixed(2)}</div>
+      </div>
+      <div class="trip-actions">
+        <button class="btn-icon edit"   onclick="openEdit(${t.id})"   title="Edit">✏️</button>
+        <button class="btn-icon delete" onclick="deleteTrip(${t.id})" title="Delete">✕</button>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function deleteTrip(id) {
+  if (!confirm('Remove this trip?')) return;
+  trips = trips.filter(t=>t.id!==id);
+  save(); renderTrips();
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const [,m,dy] = d.split('-');
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+(+dy);
+}
+
+function fmt12(t24) {
+  if (!t24) return '';
+  const { h, m } = time24ToComponents(t24);
+  return `${h}:${m}`;
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!trips.length) { showToast('No trips to export', true); return; }
+  const hdr  = 'Dep Date,Dep Time,Ret Date,Ret Time,Origin,Destination,Hours,Meals,Rate,Gross ($),Deduct %,Deductible ($),Notes\n';
+  const rows = trips.map(t =>
+    `${t.depDate},${fmt12(t.depTime)},${t.retDate},${fmt12(t.retTime)},"${t.origin}","${t.dest}",${t.hours},${t.meals},${t.rate||23},${t.gross.toFixed(2)},${t.deductPct||50},${t.deduct.toFixed(2)},"${t.notes||''}"`
+  ).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([hdr+rows],{type:'text/csv'}));
+  a.download = `Trip_Track_Meals_${cfg.year}.csv`;
+  a.click();
+  showToast('CSV downloaded ✓');
+}
+
+function exportSummary() {
+  const tg = trips.reduce((s,t)=>s+t.gross,  0);
+  const td = trips.reduce((s,t)=>s+t.deduct, 0);
+  const text =
+`TRIP TRACKER – TL2 MEAL EXPENSE SUMMARY ${cfg.year}
+==========================================
+Method:   CRA Simplified ($${cfg.rate}/meal, 1 per 4 hrs, max ${cfg.maxMeals}/day)
+Route:    ${cfg.origin}  ↔  ${cfg.dest}
+------------------------------------------
+Trips logged:                  ${trips.length}
+Total gross meal expenses:    $${tg.toFixed(2)}
+${cfg.deduct}% deductible (Line 22900):  $${td.toFixed(2)}
+==========================================
+Generated: ${new Date().toLocaleDateString('en-CA')}`;
+  navigator.clipboard.writeText(text).then(()=>showToast('TL2 summary copied ✓'));
+}
+
+
+// ── PDF EXPORT ────────────────────────────────────────────────────────────
+function exportPDF() {
+  if (!trips.length) { showToast('No trips to export', true); return; }
+  const sorted = [...trips].sort((a,b) => a.depDate.localeCompare(b.depDate));
+  const tg = sorted.reduce((s,t)=>s+t.gross,  0);
+  const td = sorted.reduce((s,t)=>s+t.deduct, 0);
+  const tm = sorted.reduce((s,t)=>s+t.meals,  0);
+  const ta = sorted.reduce((s,t)=>s+t.hours,  0);
+
+  const rows = sorted.map((t,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td>${fmtDate(t.depDate)}</td>
+      <td>${fmt12(t.depTime)}</td>
+      <td>${fmtDate(t.retDate)}</td>
+      <td>${fmt12(t.retTime)}</td>
+      <td>${t.hours.toFixed(1)}</td>
+      <td>${t.onDutyH ? t.onDutyH.toFixed(1) : '—'}</td>
+      <td>${t.bunkhouseH ? t.bunkhouseH.toFixed(1) : '—'}</td>
+      <td>${t.meals}</td>
+      <td>$${t.gross.toFixed(2)}</td>
+      <td>$${t.deduct.toFixed(2)}</td>
+      <td>${t.notes||''}</td>
+    </tr>`).join('');
+
+  const pdf = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>Trip Track – TL2 Report ${activeYear}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 11px; color: #111; padding: 30px; }
+  .header { border-bottom: 3px solid #1a1a2e; padding-bottom: 16px; margin-bottom: 20px; }
+  .header h1 { font-size: 22px; color: #1a1a2e; letter-spacing: 1px; }
+  .header p { color: #555; margin-top: 4px; font-size: 12px; }
+  .meta { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+  .meta-box { border: 1px solid #ddd; border-radius: 6px; padding: 10px; }
+  .meta-box .label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #888; }
+  .meta-box .val { font-size: 18px; font-weight: bold; color: #1a1a2e; margin-top: 2px; }
+  .meta-box .val.green { color: #1a7a4a; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  th { background: #1a1a2e; color: #fff; padding: 7px 6px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
+  td { padding: 6px 6px; border-bottom: 1px solid #eee; font-size: 10px; }
+  tr:nth-child(even) td { background: #f8f8f8; }
+  .tot td { background: #f0f4ff !important; font-weight: bold; border-top: 2px solid #1a1a2e; }
+  .num { text-align: right; }
+  .green { color: #1a7a4a; }
+  .footer { border-top: 1px solid #ddd; padding-top: 14px; font-size: 10px; color: #666; line-height: 1.7; }
+  .footer strong { color: #1a1a2e; }
+  @media print { body { padding: 15px; } }
+</style></head><body>
+<div class="header">
+  <h1>🚂 TRIP TRACKER — TL2 MEAL EXPENSE REPORT</h1>
+  <p>Tax Year: <strong>${activeYear}</strong> &nbsp;|&nbsp; Method: CRA Simplified ($${cfg.rate}/meal, 1 per 4 hrs, max ${cfg.maxMeals}/day) &nbsp;|&nbsp; Generated: ${new Date().toLocaleDateString('en-CA')}</p>
+</div>
+<div class="meta">
+  <div class="meta-box"><div class="label">Trips</div><div class="val">${sorted.length}</div></div>
+  <div class="meta-box"><div class="label">Total Meals</div><div class="val">${tm}</div></div>
+  <div class="meta-box"><div class="label">Gross Expenses</div><div class="val">$${tg.toFixed(2)}</div></div>
+  <div class="meta-box"><div class="label">Deductible (Line 22900)</div><div class="val green">$${td.toFixed(2)}</div></div>
+</div>
+<table>
+  <thead><tr>
+    <th>#</th><th>Dep Date</th><th>Dep Time</th><th>Ret Date</th><th>Ret Time</th>
+    <th>Away (h)</th><th>On Duty (h)</th><th>Bunkhouse (h)</th>
+    <th>Meals</th><th>Gross</th><th>Deductible</th><th>Notes</th>
+  </tr></thead>
+  <tbody>${rows}</tbody>
+  <tfoot><tr class="tot">
+    <td colspan="5">TOTALS — ${sorted.length} trips</td>
+    <td class="num">${ta.toFixed(1)}</td>
+    <td class="num">—</td><td class="num">—</td>
+    <td class="num">${tm}</td>
+    <td class="num">$${tg.toFixed(2)}</td>
+    <td class="num green">$${td.toFixed(2)}</td>
+    <td></td>
+  </tr></tfoot>
+</table>
+<div class="footer">
+  <strong>CRA Reference:</strong> Meal expenses claimed using the simplified method per IT-518R. Railway employees claim 50% of meal expenses on <strong>Line 22900</strong> of T1 General return. Supporting documents: <strong>TL2 (Claim for Meals and Lodging Expenses)</strong> and <strong>T2200 (Declaration of Conditions of Employment)</strong>. Retain all records for <strong>6 years</strong> from the end of the tax year.<br>
+  <strong>Route:</strong> ${cfg.origin} ↔ ${cfg.dest} &nbsp;|&nbsp; <strong>Rate:</strong> $${cfg.rate}/meal &nbsp;|&nbsp; <strong>Deductible:</strong> ${cfg.deduct}%
+</div>
+</body></html>`;
+
+  const blob = new Blob([pdf], {type:'text/html'});
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  if (win) {
+    win.onload = () => { win.print(); };
+    showToast('PDF report opened — tap Print ✓');
+  } else {
+    // Fallback: download as HTML
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `TripTracker_TL2_${activeYear}.html`;
+    a.click();
+    showToast('Report downloaded ✓');
+  }
+}
+
+// ── JSON BACKUP ───────────────────────────────────────────────────────────
+function exportJSON() {
+  const allYears = getAllYears();
+  const backup = {
+    version: 1,
+    exported: new Date().toISOString(),
+    settings: cfg,
+    books: {}
+  };
+  allYears.forEach(yr => {
+    backup.books[yr] = loadTripsForYear(yr);
+  });
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `TripTracker_Backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  showToast(`Backup saved — ${allYears.length} year${allYears.length!==1?'s':''} ✓`);
+}
+
+function importJSON() {
+  document.getElementById('importFileInput').click();
+}
+
+function handleImportFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const backup = JSON.parse(ev.target.result);
+      if (!backup.books) { showToast('Invalid backup file', true); return; }
+
+      const yearCount = Object.keys(backup.books).length;
+      if (!confirm(`Import ${yearCount} year${yearCount!==1?'s':''} of trip data? This will merge with your existing data.`)) return;
+
+      // Restore each year — merge don't overwrite
+      Object.entries(backup.books).forEach(([yr, trips]) => {
+        const existing = loadTripsForYear(parseInt(yr));
+        const merged = [...trips, ...existing].filter((t,i,a) => a.findIndex(x=>x.id===t.id)===i);
+        localStorage.setItem(tripsKey(parseInt(yr)), JSON.stringify(merged));
+      });
+
+      // Restore settings if present
+      if (backup.settings) {
+        cfg = { ...DEFAULT_SETTINGS, ...backup.settings };
+        saveCfg();
+        applySettings();
+      }
+
+      // Reload current year
+      trips = loadTripsForYear(activeYear);
+      renderTrips();
+      showToast(`Restored ${yearCount} year${yearCount!==1?'s':''} ✓`);
+    } catch(err) {
+      showToast('Failed to read backup file', true);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = ''; // reset so same file can be re-imported
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// CATS IMPORT — text paste parser
+// ══════════════════════════════════════════════════════════════════
+
+let catsparse = []; // parsed trip candidates
+
+function initCatsTab() {}
+
+
+// ══════════════════════════════════════════════════════════════════
+// QUICK ENTRY + CATS IMPORT
+// ══════════════════════════════════════════════════════════════════
+
+let catsparse = [];
+
+function initCatsTab() {}
+
+function resetCatsImport() {
+  catsparse = [];
+  document.getElementById('catsResults').style.display = 'none';
+  document.getElementById('catsEmpty').style.display   = '';
+  const ta = document.getElementById('quickEntryArea');
+  if (ta) ta.value = '';
+  const fi = document.getElementById('catsFileInput');
+  if (fi) fi.value = '';
+}
+
+function quickEntryKey(e) {
+  // Allow normal enter behaviour in textarea
+}
+
+function parseQuickEntry() {
+  const raw = document.getElementById('quickEntryArea').value.trim();
+  if (!raw) { showToast('Enter some trips first', true); return; }
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const events = lines.map(parseQuickLine).filter(Boolean);
+  if (!events.length) { showToast('Could not parse any trips — check your format', true); return; }
+  catsparse = pairCATSEvents(events);
+  renderCatsPreview(catsparse);
+  document.getElementById('catsEmpty').style.display = 'none';
+}
+
+function parseQuickLine(line) {
+  line = line.trim();
+  if (!line) return null;
+
+  const yr = cfg.year || new Date().getFullYear();
+
+  // Extract dates MM/DD
+  const dates = [];
+  const dateRe = /\b(\d{1,2}\/\d{2})\b/g;
+  let dm;
+  while ((dm = dateRe.exec(line)) !== null) {
+    const [mm, dd] = dm[1].split('/');
+    dates.push(`${yr}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`);
+  }
+
+  // Remove dates before scanning for times
+  const noDate = line.replace(/\b\d{1,2}\/\d{2}\b/g, '');
+
+  // Extract times — 3 or 4 digit numbers (115 = 01:15, 0605 = 06:05)
+  const times = [];
+  const timeRe = /\b(\d{3,4})\b/g;
+  let tm;
+  while ((tm = timeRe.exec(noDate)) !== null) {
+    const t = tm[1].padStart(4,'0');
+    const h = parseInt(t.slice(0,2)), m = parseInt(t.slice(2,4));
+    if (h >= 0 && h <= 23 && m >= 0 && m <= 59)
+      times.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+  }
+
+  // Extract train IDs — letters + digits, case insensitive
+  const trains = [];
+  const trainRe = /\b([A-Za-z]{1,4}\d{2,7}[A-Za-z]?\d*|[Dd][Hh][Tt][A-Za-z0-9]*)\b/g;
+  let tr;
+  while ((tr = trainRe.exec(noDate)) !== null) trains.push(tr[1].toUpperCase());
+
+  if (!dates.length && !times.length) return null;
+
+  return {
+    startDate: dates[0] || `${yr}-01-01`,
+    startTime: times[0] || '00:00',
+    endDate:   dates[1] || dates[0] || `${yr}-01-01`,
+    endTime:   times[1] || '00:00',
+    trainId:   trains[0] || '',
+    totalTime: '00:00',
+    raw: line,
+    incomplete: dates.length < 2 || times.length < 2
+  };
+}
+
+function catsDateToISO(d) {
+  if (!d) return '';
+  const [yy, mm, dd] = d.split('/');
+  const yyyy = parseInt(yy) < 50 ? '20' + yy : '19' + yy;
+  return yyyy + '-' + mm + '-' + dd;
+}
+
+function getTrainSeries(trainId) {
+  if (!trainId) return 'Unknown';
+  if (/^DHT/i.test(trainId)) return 'DHT';
+  const match = trainId.match(/(\d+)/);
+  if (!match) return 'Other';
+  const num = parseInt(match[1]);
+  const h = Math.floor(num / 100) * 100;
+  if (h >= 100 && h < 200) return '100s';
+  if (h >= 700 && h < 800) return '700s';
+  if (h >= 800 && h < 900) return '800s';
+  return 'Other';
+}
+
+function isCancelled(trainId, totalTime) {
+  if (!trainId) return false;
+  const hasMiddleC = /[A-Z]\d+C\d*/i.test(trainId) || /\d+C\d+/i.test(trainId);
+  const shortDuty  = parseDurationHours(totalTime) < 3;
+  return hasMiddleC && shortDuty;
+}
+
+function isWestbound(trainId) {
+  if (!trainId) return null;
+  if (/^DHT/i.test(trainId)) return null;
+  const match = trainId.match(/(\d+)/);
+  if (!match) return null;
+  return parseInt(match[1]) % 2 !== 0;
+}
+
+function parseDurationHours(timeStr) {
+  if (!timeStr) return 0;
+  const [h, m] = timeStr.split(':').map(Number);
+  return h + (m || 0) / 60;
+}
+
+function pairCATSEvents(events) {
+  const trips = [];
+
+  // If events already come pre-paired (quick entry: each line = one event/leg)
+  // try to pair consecutive westbound→eastbound
+  let i = 0;
+  while (i < events.length) {
+    const ev = events[i];
+
+    // Flag cancelled
+    if (isCancelled(ev.trainId, ev.totalTime)) {
+      trips.push({ status:'skip', note:'Cancelled', leg1:ev, leg2:null });
+      i++; continue;
+    }
+
+    const west = ev.trainId ? isWestbound(ev.trainId) : null;
+    const isDHT = /^DHT/i.test(ev.trainId || '');
+    const next  = events[i+1];
+
+    if (next && !isCancelled(next.trainId, next.totalTime)) {
+      const nextWest = next.trainId ? isWestbound(next.trainId) : null;
+      const nextDHT  = /^DHT/i.test(next.trainId || '');
+      const validPair = (west === true && (nextWest === false || nextDHT || !next.trainId)) ||
+                        (isDHT && (nextWest === false || !next.trainId)) ||
+                        (!ev.trainId && !next.trainId) || // both unknown — just pair them
+                        (west === null && nextWest === false);
+
+      if (validPair) {
+        const totalHours = calcTripHours(ev.startDate, ev.startTime, next.endDate, next.endTime);
+        const flagLong   = totalHours > 55;
+        const flagShort  = calcLayoverHours(ev, next) < 6;
+        const flagIncomp = ev.incomplete || next.incomplete;
+        const note = flagIncomp ? 'Incomplete data' : flagLong ? 'Trip >55hrs' : flagShort ? 'Short layover' : '';
+        trips.push({
+          status: (flagLong || flagShort || flagIncomp) ? 'review' : 'ok',
+          note, leg1: ev, leg2: next, totalHours
+        });
+        i += 2; continue;
+      }
+    }
+
+    // Single unpaired leg
+    trips.push({
+      status: 'review',
+      note: ev.incomplete ? 'Incomplete data' : 'Unpaired leg',
+      leg1: ev, leg2: null,
+      totalHours: parseDurationHours(ev.totalTime)
+    });
+    i++;
+  }
+  return trips;
+}
+
+function calcTripHours(depDate, depTime, retDate, retTime) {
+  const dep = new Date(depDate + 'T' + depTime);
+  const ret = new Date(retDate + 'T' + retTime);
+  const h = (ret - dep) / 3600000;
+  return h < 0 ? h + 24 : h; // handle midnight crossover
+}
+
+function calcLayoverHours(leg1, leg2) {
+  const a = new Date(leg1.endDate + 'T' + leg1.endTime);
+  const b = new Date(leg2.startDate + 'T' + leg2.startTime);
+  const h = (b - a) / 3600000;
+  return h < 0 ? 0 : h;
+}
+
+function renderCatsPreview(trips) {
+  const body  = document.getElementById('catsPreviewBody');
+  const pills = document.getElementById('catsSummaryPills');
+  const ok    = trips.filter(t=>t.status==='ok').length;
+  const rev   = trips.filter(t=>t.status==='review').length;
+  const skip  = trips.filter(t=>t.status==='skip').length;
+
+  document.getElementById('catsResultCount').textContent = `— ${trips.length} events`;
+  pills.innerHTML = `
+    <span class="cats-pill green">✅ ${ok} ready</span>
+    ${rev  ? `<span class="cats-pill yellow">⚠️ ${rev} review</span>`  : ''}
+    ${skip ? `<span class="cats-pill red">✕ ${skip} skipped</span>` : ''}`;
+
+  body.innerHTML = trips.map((t, idx) => {
+    const icon = t.status==='ok' ? '✅' : t.status==='review' ? '⚠️' : '✕';
+    const l1 = t.leg1, l2 = t.leg2;
+    const hrs = t.totalHours ? t.totalHours.toFixed(1)+'h' : '—';
+    return `<tr class="cats-row-${t.status}">
+      <td>${icon}</td>
+      <td>${l1 ? fmtDate(l1.startDate) : '—'}</td>
+      <td style="font-size:11px">${l1 ? l1.startTime : '—'}</td>
+      <td style="font-size:11px;color:var(--gold)">${l1 ? (l1.trainId||'?') : '—'}</td>
+      <td>${l2 ? fmtDate(l2.endDate) : '—'}</td>
+      <td style="font-size:11px">${l2 ? l2.endTime : '—'}</td>
+      <td style="font-size:11px;color:var(--green)">${l2 ? (l2.trainId||'?') : '—'}</td>
+      <td>${hrs}</td>
+      <td style="font-size:11px;color:var(--muted)">${t.note||''}</td>
+    </tr>`;
+  }).join('');
+
+  const importCount = trips.filter(t=>t.status!=='skip' && t.leg2).length;
+  document.getElementById('catsImportBtn').textContent = `✓ Import ${importCount} Trip${importCount!==1?'s':''}`;
+  document.getElementById('catsResults').style.display = '';
+  document.getElementById('catsEmpty').style.display   = 'none';
+}
+
+function confirmCatsImport() {
+  const toImport = catsparse.filter(t => t.status !== 'skip' && t.leg1 && t.leg2);
+  if (!toImport.length) { showToast('No complete trips to import', true); return; }
+
+  let added = 0, skipped = 0;
+  toImport.forEach(t => {
+    const depDate = t.leg1.startDate, depTime = t.leg1.startTime;
+    const retDate = t.leg2.endDate,   retTime = t.leg2.endTime;
+    const yr      = parseInt(depDate.split('-')[0]);
+    const hours   = calcTripHours(depDate, depTime, retDate, retTime);
+    const meals   = calcMeals(hours);
+    const gross   = meals * cfg.rate;
+    const deduct  = gross * (cfg.deduct / 100);
+
+    const trip = {
+      id: Date.now() + Math.random(),
+      depDate, depTime, retDate, retTime,
+      origin: cfg.origin, dest: cfg.dest,
+      notes: [t.leg1.trainId, t.leg2.trainId].filter(Boolean).join(' / '),
+      trainOut: t.leg1.trainId, trainBack: t.leg2.trainId,
+      series: getTrainSeries(t.leg1.trainId),
+      hours, meals, gross, deduct,
+      rate: cfg.rate, deductPct: cfg.deduct,
+      leg1h: 0, leg2h: 0,
+      bunkhouseH: calcLayoverHours(t.leg1, t.leg2),
+      onDutyH: 0,
+      catsImport: true
+    };
+
+    const yearTrips = loadTripsForYear(yr);
+    const dup = yearTrips.find(x => x.depDate === depDate && x.depTime === depTime);
+    if (dup) { skipped++; return; }
+    yearTrips.push(trip);
+    localStorage.setItem(tripsKey(yr), JSON.stringify(yearTrips));
+    if (yr === activeYear) trips = yearTrips;
+    added++;
+  });
+
+  renderTrips();
+  resetCatsImport();
+  let msg = `Imported ${added} trip${added!==1?'s':''}`;
+  if (skipped) msg += `, ${skipped} duplicate${skipped!==1?'s':''} skipped`;
+  showToast(msg + ' ✓');
+  switchTab('sheet');
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// YEAR WRAPPED
+// ══════════════════════════════════════════════════════════════════
+
+function closeWrapped() {
+  document.getElementById('wrappedOverlay').style.display = 'none';
+}
+
+function showWrapped() {
+  if (!trips.length) { showToast('No trips logged yet', true); return; }
+  document.getElementById('wrappedOverlay').style.display = '';
+  drawWrapped();
+}
+
+function shareWrapped() {
+  const canvas = document.getElementById('wrappedCanvas');
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `TripTracker_${activeYear}_Wrapped.png`;
+    a.click();
+    showToast('Image saved ✓');
+  });
+}
+
+function drawWrapped() {
+  const canvas = document.getElementById('wrappedCanvas');
+  const W = 720, H = 1280;
+  canvas.width  = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // ── Stats ──────────────────────────────────────────────────────
+  const yr       = activeYear;
+  const tc       = trips.length;
+  const totalH   = trips.reduce((s,t)=>s+t.hours, 0);
+  const totalMeals = trips.reduce((s,t)=>s+t.meals, 0);
+  const totalDeduct = trips.reduce((s,t)=>s+t.deduct, 0);
+  const totalGross  = trips.reduce((s,t)=>s+t.gross, 0);
+  const avgH     = totalH / tc;
+  const daysAway = totalH / 24;
+  const longestTrip = trips.reduce((mx,t) => t.hours > mx.hours ? t : mx, trips[0]);
+  const totalBunk = trips.reduce((s,t)=>s+(t.bunkhouseH||0), 0);
+  const totalOnDuty = trips.reduce((s,t)=>s+(t.onDutyH||0), 0);
+
+  // Busiest month
+  const monthCounts = Array(12).fill(0);
+  trips.forEach(t => { if(t.depDate) monthCounts[parseInt(t.depDate.split('-')[1])-1]++; });
+  const busiestMonthIdx = monthCounts.indexOf(Math.max(...monthCounts));
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const busiestMonth = monthNames[busiestMonthIdx];
+
+  // Most common train series
+  const seriesCounts = {};
+  trips.forEach(t => {
+    const s = t.series || getTrainSeries(t.trainOut || t.notes || '');
+    seriesCounts[s] = (seriesCounts[s]||0) + 1;
+  });
+  const topSeries = Object.entries(seriesCounts).sort((a,b)=>b[1]-a[1])[0];
+
+  // KM — Smithers↔Rupert ~740km each way
+  const kmPerTrip = 740 * 2;
+  const totalKm = tc * kmPerTrip;
+
+  // ── Background gradient ────────────────────────────────────────
+  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+  bgGrad.addColorStop(0,   '#0d0221');
+  bgGrad.addColorStop(0.3, '#1a0a3e');
+  bgGrad.addColorStop(0.7, '#0d1f3c');
+  bgGrad.addColorStop(1,   '#0a0f1a');
+  ctx.fillStyle = bgGrad;
+  ctx.roundRect(0, 0, W, H, 32);
+  ctx.fill();
+
+  // Stars
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  for (let i = 0; i < 120; i++) {
+    const x = Math.random() * W;
+    const y = Math.random() * H * 0.6;
+    const r = Math.random() * 1.5;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Glowing orb top
+  const orb = ctx.createRadialGradient(W/2, 180, 0, W/2, 180, 300);
+  orb.addColorStop(0, 'rgba(168,85,247,0.4)');
+  orb.addColorStop(0.5, 'rgba(99,50,180,0.15)');
+  orb.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = orb;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Header ─────────────────────────────────────────────────────
+  // Logo pill
+  ctx.fillStyle = 'rgba(168,85,247,0.2)';
+  roundRect(ctx, W/2-80, 52, 160, 36, 18);
+  ctx.fill();
+  ctx.strokeStyle = '#a855f7';
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, W/2-80, 52, 160, 36, 18);
+  ctx.stroke();
+  ctx.fillStyle = '#a855f7';
+  ctx.font = '700 13px Barlow, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.letterSpacing = '3px';
+  ctx.fillText('TRIP TRACKER', W/2, 75);
+
+  // Year
+  ctx.font = '800 120px Barlow Condensed, sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.fillText(yr, W/2, 210);
+
+  // WRAPPED text
+  const wrapGrad = ctx.createLinearGradient(W/2-150, 0, W/2+150, 0);
+  wrapGrad.addColorStop(0, '#a855f7');
+  wrapGrad.addColorStop(0.5, '#ec4899');
+  wrapGrad.addColorStop(1, '#f0a500');
+  ctx.fillStyle = wrapGrad;
+  ctx.font = '800 64px Barlow Condensed, sans-serif';
+  ctx.letterSpacing = '8px';
+  ctx.fillText('WRAPPED', W/2, 275);
+  ctx.letterSpacing = '0px';
+
+  // Divider
+  const divGrad = ctx.createLinearGradient(60, 0, W-60, 0);
+  divGrad.addColorStop(0, 'rgba(168,85,247,0)');
+  divGrad.addColorStop(0.5, 'rgba(168,85,247,0.8)');
+  divGrad.addColorStop(1, 'rgba(168,85,247,0)');
+  ctx.strokeStyle = divGrad;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(60, 295); ctx.lineTo(W-60, 295);
+  ctx.stroke();
+
+  // ── Big stat cards ─────────────────────────────────────────────
+  const cards = [
+    { label: 'TRIPS COMPLETED', value: tc, unit: 'runs', color: '#a855f7' },
+    { label: 'HOURS AWAY', value: Math.round(totalH), unit: 'hrs from home', color: '#ec4899' },
+    { label: 'MEALS CLAIMED', value: totalMeals, unit: 'CRA meals', color: '#f0a500' },
+    { label: 'TOTAL DEDUCTIBLE', value: '$'+totalDeduct.toFixed(0), unit: 'Line 22900', color: '#1db87a' },
+  ];
+
+  const cw = (W - 60) / 2, ch = 130;
+  cards.forEach((c, i) => {
+    const cx = 20 + (i%2) * (cw+20);
+    const cy = 315 + Math.floor(i/2) * (ch+14);
+    // Card bg
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    roundRect(ctx, cx, cy, cw, ch, 16);
+    ctx.fill();
+    ctx.strokeStyle = c.color + '44';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, cx, cy, cw, ch, 16);
+    ctx.stroke();
+    // Glow top-left corner
+    const cGlow = ctx.createRadialGradient(cx+20, cy+20, 0, cx+20, cy+20, 60);
+    cGlow.addColorStop(0, c.color + '30');
+    cGlow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = cGlow;
+    roundRect(ctx, cx, cy, cw, ch, 16);
+    ctx.fill();
+    // Value
+    ctx.fillStyle = c.color;
+    ctx.font = '800 46px Barlow Condensed, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(c.value, cx+16, cy+62);
+    // Unit
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '400 13px Barlow, sans-serif';
+    ctx.fillText(c.unit, cx+16, cy+82);
+    // Label
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = '600 11px Barlow, sans-serif';
+    ctx.fillText(c.label, cx+16, cy+110);
+  });
+
+  // ── Fun stats row ───────────────────────────────────────────────
+  const fy = 315 + 2*(ch+14) + 14;
+
+  function drawStatRow(icon, label, value, y) {
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    roundRect(ctx, 20, y, W-40, 56, 12);
+    ctx.fill();
+    ctx.font = '500 22px Barlow, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.textAlign = 'left';
+    ctx.fillText(icon + '  ' + label, 36, y+34);
+    ctx.fillStyle = '#a855f7';
+    ctx.font = '700 22px Barlow Condensed, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(value, W-36, y+34);
+  }
+
+  drawStatRow('📅', 'Busiest month', busiestMonth, fy);
+  drawStatRow('⏱', 'Longest trip', fmtDuration(longestTrip.hours) + ' away', fy+66);
+  drawStatRow('📏', 'KM on the rails (est)', totalKm.toLocaleString() + ' km', fy+132);
+  drawStatRow('🛏', 'Bunkhouse time', fmtDuration(totalBunk), fy+198);
+  drawStatRow('🔧', 'Total on duty', fmtDuration(totalOnDuty), fy+264);
+  if (topSeries) drawStatRow('🚂', 'Top train series', topSeries[0] + ' (' + topSeries[1] + ' trips)', fy+330);
+
+  // ── Bottom message ──────────────────────────────────────────────
+  const msgY = fy + 416;
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  roundRect(ctx, 20, msgY, W-40, 70, 14);
+  ctx.fill();
+
+  const daysStr = daysAway.toFixed(1);
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '400 15px Barlow, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`You spent ${daysStr} days away from home in ${yr}.`, W/2, msgY+28);
+  ctx.fillStyle = '#a855f7';
+  ctx.font = '700 16px Barlow, sans-serif';
+  ctx.fillText(`That's dedication. 🚂`, W/2, msgY+52);
+
+  // ── Footer ──────────────────────────────────────────────────────
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.font = '400 13px Barlow, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Trip Track · CRA TL2 Railway Meal Tracker', W/2, H-30);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+function clearAll() {
+  if (!trips.length) return;
+  if (confirm(`Delete all ${trips.length} trip${trips.length!==1?'s':''}? Cannot be undone.`)) {
+    trips=[]; save(); renderTrips(); showToast('All trips cleared');
+  }
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isError ? 'var(--red)' : 'var(--green)';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+
+// ── DATA TAB ──────────────────────────────────────────────────────────────
+function renderData() {
+  document.getElementById('data-year-label').textContent = 'Tax Year: ' + activeYear;
+
+  const tripsWithData = trips.filter(t => t.onDutyH);
+
+  // Summary stats
+  const totalAway    = trips.reduce((s,t) => s + t.hours, 0);
+  const totalOnDuty  = tripsWithData.reduce((s,t) => s + t.onDutyH, 0);
+  const totalBunk    = tripsWithData.reduce((s,t) => s + (t.bunkhouseH||0), 0);
+  const avgTrip      = trips.length ? totalAway / trips.length : 0;
+
+  document.getElementById('d-away').textContent     = trips.length     ? totalAway.toFixed(1)+'h'   : '—';
+  document.getElementById('d-onduty').textContent   = tripsWithData.length ? totalOnDuty.toFixed(1)+'h' : '—';
+  document.getElementById('d-avg').textContent      = trips.length     ? avgTrip.toFixed(1)+'h'     : '—';
+  document.getElementById('d-bunkhouse').textContent= tripsWithData.length ? totalBunk.toFixed(1)+'h'   : '—';
+
+  drawHeatmap();
+  drawMonthChart();
+  drawDowChart();
+}
+
+function drawHeatmap() {
+  const canvas = document.getElementById('heatmapCanvas');
+  const empty  = document.getElementById('heatmapEmpty');
+  if (!trips.length) { canvas.style.display='none'; empty.style.display='flex'; return; }
+  canvas.style.display='block'; empty.style.display='none';
+
+  // Count departures per hour (0-23)
+  const counts = Array(24).fill(0);
+  trips.forEach(t => {
+    if (t.depTime) {
+      const h = parseInt(t.depTime.split(':')[0]);
+      counts[h]++;
+    }
+  });
+  const max = Math.max(...counts, 1);
+
+  const dpr  = window.devicePixelRatio || 1;
+  const W    = canvas.parentElement.clientWidth - 28;
+  const H    = 160;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const padL=28, padB=28, padR=8, padT=10;
+  const chartW = W - padL - padR;
+  const chartH = H - padB - padT;
+  const barW   = chartW / 24;
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(42,74,122,0.6)';
+  ctx.lineWidth = 1;
+  [0.25,0.5,0.75,1].forEach(f => {
+    const y = padT + chartH * (1 - f);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
+  });
+
+  // Bars
+  counts.forEach((c, h) => {
+    if (!c) return;
+    const intensity = c / max;
+    const r = Math.round(227 * intensity + 26 * (1-intensity));
+    const g = Math.round(24  * intensity + 68 * (1-intensity));
+    const b = Math.round(55  * intensity + 122 * (1-intensity));
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    const bh = chartH * intensity;
+    const x  = padL + h * barW + 1;
+    const y  = padT + chartH - bh;
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW - 2, bh, 3);
+    ctx.fill();
+
+    // Count label on tall bars
+    if (c > 0) {
+      ctx.fillStyle = intensity > 0.5 ? '#fff' : 'rgba(240,165,0,0.9)';
+      ctx.font = `bold ${Math.max(8, Math.min(11, barW*0.55))}px Barlow Condensed, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(c, padL + h * barW + barW/2, y - 3);
+    }
+  });
+
+  // X axis labels (every 3 hrs)
+  ctx.fillStyle = '#8aa0bc';
+  ctx.font = '10px Barlow, sans-serif';
+  ctx.textAlign = 'center';
+  for (let h=0; h<24; h+=3) {
+    const x = padL + h * barW + barW/2;
+    ctx.fillText(String(h).padStart(2,'0'), x, H - 8);
+  }
+
+  // Y axis label
+  ctx.save();
+  ctx.translate(10, padT + chartH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillStyle = '#8aa0bc';
+  ctx.font = '9px Barlow, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('trips', 0, 0);
+  ctx.restore();
+}
+
+function drawMonthChart() {
+  const canvas = document.getElementById('monthCanvas');
+  const empty  = document.getElementById('monthEmpty');
+  if (!trips.length) { canvas.style.display='none'; empty.style.display='flex'; return; }
+  canvas.style.display='block'; empty.style.display='none';
+
+  const months = Array(12).fill(0);
+  const monthHours = Array(12).fill(0);
+  trips.forEach(t => {
+    if (t.depDate) {
+      const m = parseInt(t.depDate.split('-')[1]) - 1;
+      months[m]++;
+      monthHours[m] += t.hours;
+    }
+  });
+  const maxTrips = Math.max(...months, 1);
+  const MON = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+
+  const dpr = window.devicePixelRatio || 1;
+  const W   = canvas.parentElement.clientWidth - 28;
+  const H   = 160;
+  canvas.width  = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const padL=28, padB=28, padR=8, padT=10;
+  const chartW = W - padL - padR;
+  const chartH = H - padB - padT;
+  const barW   = chartW / 12;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(42,74,122,0.6)'; ctx.lineWidth=1;
+  [0.25,0.5,0.75,1].forEach(f => {
+    const y = padT + chartH*(1-f);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+  });
+
+  // Bars
+  months.forEach((c,m) => {
+    if (!c) return;
+    const intensity = c / maxTrips;
+    ctx.fillStyle = `rgba(29,184,122,${0.3 + intensity*0.7})`;
+    const bh = chartH * intensity;
+    const x  = padL + m * barW + 2;
+    const y  = padT + chartH - bh;
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW-4, bh, 3);
+    ctx.fill();
+    if (c > 0) {
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold 10px Barlow Condensed, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(c, padL + m*barW + barW/2, y-3);
+    }
+  });
+
+  // X labels
+  ctx.fillStyle='#8aa0bc'; ctx.font='10px Barlow,sans-serif'; ctx.textAlign='center';
+  MON.forEach((l,i) => ctx.fillText(l, padL + i*barW + barW/2, H-8));
+
+  // Y label
+  ctx.save(); ctx.translate(10, padT+chartH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillStyle='#8aa0bc'; ctx.font='9px Barlow,sans-serif'; ctx.textAlign='center';
+  ctx.fillText('trips',0,0); ctx.restore();
+}
+
+function drawDowChart() {
+  const canvas = document.getElementById('dowCanvas');
+  const empty  = document.getElementById('dowEmpty');
+  if (!trips.length) { canvas.style.display='none'; empty.style.display='flex'; return; }
+  canvas.style.display='block'; empty.style.display='none';
+
+  const days = Array(7).fill(0);
+  trips.forEach(t => {
+    if (t.depDate) {
+      const d = new Date(t.depDate + 'T12:00:00').getDay();
+      days[d]++;
+    }
+  });
+  const maxD = Math.max(...days,1);
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  const dpr = window.devicePixelRatio||1;
+  const W   = canvas.parentElement.clientWidth - 28;
+  const H   = 150;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const padL=28, padB=28, padR=8, padT=10;
+  const chartW=W-padL-padR, chartH=H-padB-padT;
+  const barW=chartW/7;
+
+  ctx.strokeStyle='rgba(42,74,122,0.6)'; ctx.lineWidth=1;
+  [0.5,1].forEach(f=>{
+    const y=padT+chartH*(1-f);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+  });
+
+  days.forEach((c,d)=>{
+    if(!c) return;
+    const intensity=c/maxD;
+    ctx.fillStyle=`rgba(240,165,0,${0.25+intensity*0.75})`;
+    const bh=chartH*intensity;
+    const x=padL+d*barW+2, y=padT+chartH-bh;
+    ctx.beginPath(); ctx.roundRect(x,y,barW-4,bh,3); ctx.fill();
+    if(c>0){
+      ctx.fillStyle='#fff';
+      ctx.font='bold 11px Barlow Condensed,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText(c, padL+d*barW+barW/2, y-3);
+    }
+  });
+
+  ctx.fillStyle='#8aa0bc'; ctx.font='10px Barlow,sans-serif'; ctx.textAlign='center';
+  DAYS.forEach((l,i)=>ctx.fillText(l, padL+i*barW+barW/2, H-8));
+
+  ctx.save(); ctx.translate(10,padT+chartH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillStyle='#8aa0bc'; ctx.font='9px Barlow,sans-serif'; ctx.textAlign='center';
+  ctx.fillText('trips',0,0); ctx.restore();
+}
+
+
+// ── SHEET TAB ─────────────────────────────────────────────────────────────
+function renderSheet() {
+  document.getElementById('sheet-year-label').textContent = 'Tax Year: ' + activeYear;
+  // Summary cards at top of review
+  const sm = document.getElementById('sheetSummary');
+  if (sm) {
+    const tm = trips.reduce((s,t)=>s+t.meals, 0);
+    const tg = trips.reduce((s,t)=>s+t.gross, 0);
+    const td = trips.reduce((s,t)=>s+t.deduct, 0);
+    sm.innerHTML = `
+      <div class="card"><div class="card-label">Trips</div><div class="card-value">${trips.length}</div><div class="card-sub">logged</div></div>
+      <div class="card"><div class="card-label">Total Meals</div><div class="card-value" style="color:var(--gold)">${tm}</div><div class="card-sub">meals claimed</div></div>
+      <div class="card green"><div class="card-label">Deductible</div><div class="card-value">$${td.toFixed(2)}</div><div class="card-sub">Line 22900</div></div>
+    `;
+  }
+  const body  = document.getElementById('sheetBody');
+  const foot  = document.getElementById('sheetFoot');
+  const empty = document.getElementById('sheetEmpty');
+  const wrap  = document.querySelector('.sheet-wrap');
+  body.innerHTML = '';
+  foot.innerHTML = '';
+
+  const sorted = [...trips].sort((a,b) => a.depDate.localeCompare(b.depDate));
+
+  if (!sorted.length) {
+    wrap.style.display = 'none';
+    empty.style.display = '';
+    return;
+  }
+  wrap.style.display = '';
+  empty.style.display = 'none';
+
+  let totAway=0, totDuty=0, totBunk=0, totMeals=0, totGross=0, totDeduct=0;
+
+  sorted.forEach((t, i) => {
+    totAway   += t.hours;
+    totDuty   += t.onDutyH   || 0;
+    totBunk   += t.bunkhouseH|| 0;
+    totMeals  += t.meals;
+    totGross  += t.gross;
+    totDeduct += t.deduct;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td>${fmtDate(t.depDate)}</td>
+      <td>${fmt12(t.depTime)}</td>
+      <td>${fmtDate(t.retDate)}</td>
+      <td>${fmt12(t.retTime)}</td>
+      <td class="num">${t.hours.toFixed(1)}</td>
+      <td class="num">${t.onDutyH    ? t.onDutyH.toFixed(1)    : '—'}</td>
+      <td class="num">${t.bunkhouseH ? t.bunkhouseH.toFixed(1)  : '—'}</td>
+      <td class="num">${t.meals}</td>
+      <td class="num">$${t.gross.toFixed(2)}</td>
+      <td class="num green">$${t.deduct.toFixed(2)}</td>
+      <td>${t.notes||''}</td>
+    `;
+    body.appendChild(tr);
+  });
+
+  const tfr = document.createElement('tr');
+  tfr.className = 'tot-row';
+  tfr.innerHTML = `
+    <td colspan="5">TOTALS (${sorted.length} trips)</td>
+    <td class="num">${totAway.toFixed(1)}</td>
+    <td class="num">${totDuty ? totDuty.toFixed(1) : '—'}</td>
+    <td class="num">${totBunk ? totBunk.toFixed(1) : '—'}</td>
+    <td class="num">${totMeals}</td>
+    <td class="num">$${totGross.toFixed(2)}</td>
+    <td class="num green">$${totDeduct.toFixed(2)}</td>
+    <td></td>
+  `;
+  foot.appendChild(tfr);
+}
+
+// ── DATE CHANGE LISTENERS ─────────────────────────────────────────────────
+document.getElementById('f-depdate').addEventListener('input', () => { autoFillReturn(); updateCalc(); updateDutyPreview(); });
+document.getElementById('f-retdate').addEventListener('input', () => { updateCalc(); updateDutyPreview(); });
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+buildDrums();
+document.getElementById('f-depdate').value = new Date().toISOString().split('T')[0];
+document.getElementById('f-origin').value  = cfg.origin;
+document.getElementById('f-dest').value    = cfg.dest;
+document.getElementById('active-year-label').textContent = 'Tax Year: ' + activeYear;
+applySettings();
+
+// Set default departure time to 08:00
+pickerTimes['dep'] = '08:00';
+setTimeDisplay('btn-deptime','deptime-display','08:00');
+autoFillReturn();
+renderTrips();
+</script>
+</body>
+</html>
