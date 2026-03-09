@@ -119,7 +119,7 @@ header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; pad
 .drum-wrap::before { top: 0; background: linear-gradient(to bottom, var(--navy) 20%, transparent); }
 .drum-wrap::after  { bottom: 0; background: linear-gradient(to top,   var(--navy) 20%, transparent); }
 .drum-selector { position: absolute; top: 50%; left: 4px; right: 4px; height: 40px; transform: translateY(-50%); border-top: 2px solid var(--gold); border-bottom: 2px solid var(--gold); border-radius: 4px; pointer-events: none; z-index: 2; }
-.drum { height: 200px; overflow-y: scroll; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 80px 0; }
+.drum { height: 200px; overflow-y: scroll; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .drum::-webkit-scrollbar { display: none; }
 .drum-item { height: 40px; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 600; scroll-snap-align: center; color: var(--muted); }
 .drum-colon { font-size: 32px; font-weight: 700; color: var(--gold); padding-bottom: 6px; }
@@ -167,6 +167,8 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
 
 /* WRAPPED */
 #wrappedOverlay { display: none; position: fixed; inset: 0; z-index: 500; background: #0a0f1a; overflow-y: auto; padding: 16px 16px calc(40px + var(--sab)); }
+#onboardingOverlay { display: none; position: fixed; inset: 0; z-index: 600; background: rgba(10,15,26,0.97); align-items: center; justify-content: center; padding: 24px; }
+.route-item { display:flex; align-items:center; gap:10px; background:var(--steel); border-radius:10px; padding:12px 14px; }
 </style>
 </head>
 <body>
@@ -190,10 +192,16 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
 
   <div class="section-title">Log a Trip</div>
 
+  <div class="form-group" style="margin-bottom:12px;">
+    <label>Destination</label>
+    <select id="routeSelect" style="width:100%;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:12px 14px;border-radius:10px;font-size:15px;font-family:'Barlow',sans-serif;">
+    </select>
+  </div>
+
   <div class="leg-label">Leg 1 — Departure</div>
-  <div class="form-row">
+  <div class="form-row" style="grid-template-columns:3fr 2fr;">
     <div class="form-group"><label>Date</label><input type="date" id="depDate" onchange="updatePreview()"></div>
-    <div class="form-group"><label>Train</label><input type="text" id="trainOut" placeholder="e.g. Q199" autocomplete="off" autocapitalize="characters"></div>
+    <div class="form-group"><label>Train</label><input type="text" id="trainOut" placeholder="Q199" autocomplete="off" autocapitalize="characters"></div>
   </div>
   <div class="form-row">
     <div class="form-group"><label>On Duty</label><button class="time-btn" id="depTimeBtn" onclick="openPicker('dep')">Tap to set</button></div>
@@ -201,9 +209,9 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
   </div>
 
   <div class="leg-label">Leg 2 — Return</div>
-  <div class="form-row">
+  <div class="form-row" style="grid-template-columns:3fr 2fr;">
     <div class="form-group"><label>Date</label><input type="date" id="retDate" onchange="updatePreview()"></div>
-    <div class="form-group"><label>Train</label><input type="text" id="trainBack" placeholder="e.g. U752" autocomplete="off" autocapitalize="characters"></div>
+    <div class="form-group"><label>Train</label><input type="text" id="trainBack" placeholder="U752" autocomplete="off" autocapitalize="characters"></div>
   </div>
   <div class="form-row">
     <div class="form-group"><label>On Duty</label><button class="time-btn" id="depDestBtn" onclick="openPicker('depDest')">Tap to set</button></div>
@@ -318,6 +326,7 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     <div class="cn-logo" style="background:var(--track);">⚙️</div>
     <div class="header-text"><h1>Settings</h1><p>Rates &amp; preferences</p></div>
   </header>
+
   <div class="section-title">CRA Rates</div>
   <div class="setting-row">
     <div><div class="setting-label">Meal Rate</div><div class="setting-sub">CRA simplified flat rate per meal</div></div>
@@ -331,20 +340,34 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     <div><div class="setting-label">Deductible %</div><div class="setting-sub">Railway employees: 50% (TL2 / Line 22900)</div></div>
     <input class="setting-input" type="number" id="setDeduct" value="50" min="1" max="100">
   </div>
-  <div class="section-title" style="margin-top:16px;">Trip Defaults</div>
+
+  <div class="section-title" style="margin-top:16px;">Home Terminal</div>
   <div class="setting-row">
-    <div><div class="setting-label">Origin</div></div>
-    <input class="setting-input" type="text" id="setOrigin" value="Smithers" style="width:140px;text-align:left;">
+    <div><div class="setting-label">Terminal</div><div class="setting-sub">Your home base — where trips originate</div></div>
+    <input class="setting-input" type="text" id="setHomeTerminal" placeholder="e.g. Smithers" style="width:140px;text-align:left;">
   </div>
+
+  <div class="section-title" style="margin-top:16px;">Active Tax Year</div>
   <div class="setting-row">
-    <div><div class="setting-label">Destination</div></div>
-    <input class="setting-input" type="text" id="setDest" value="Prince Rupert" style="width:140px;text-align:left;">
-  </div>
-  <div class="setting-row">
-    <div><div class="setting-label">Active Tax Year</div></div>
+    <div><div class="setting-label">Tax Year</div></div>
     <input class="setting-input" type="number" id="setYear" value="2025" min="2020" max="2040">
   </div>
+
   <button class="btn-save" onclick="saveSettings()">💾 Save Settings</button>
+
+  <div class="section-title" style="margin-top:24px;">Destinations</div>
+  <div style="color:var(--muted);font-size:12px;margin-bottom:12px;">Destinations from your home terminal. One-way miles used for Year Wrapped totals.</div>
+
+  <div id="routeManagerList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+
+  <div style="background:var(--steel);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+    <div style="font-size:13px;font-weight:600;color:var(--muted);letter-spacing:0.5px;">ADD DESTINATION</div>
+    <input type="text" id="newRouteName" placeholder="City, Province" style="background:var(--track);border:1px solid rgba(255,255,255,0.08);color:var(--light);padding:10px 12px;border-radius:8px;font-size:14px;width:100%;">
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="number" id="newRouteMiles" placeholder="One-way miles" style="background:var(--track);border:1px solid rgba(255,255,255,0.08);color:var(--light);padding:10px 12px;border-radius:8px;font-size:14px;flex:1;">
+      <button onclick="addRoute()" style="background:var(--red);border:none;color:#fff;padding:10px 18px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;">＋ Add</button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════ BOTTOM NAV -->
@@ -394,6 +417,34 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
 </div>
 
 <!-- ═══════════════════════════════════════════════ YEAR WRAPPED -->
+<!-- ═══════════════════════════════════════════════ ONBOARDING -->
+<div id="onboardingOverlay">
+  <div style="background:var(--navy);border-radius:20px;padding:28px 24px;max-width:400px;width:100%;border:1px solid var(--track);">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:48px;margin-bottom:8px;">🚂</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:28px;color:var(--light);letter-spacing:1px;">Welcome to Trip Track</div>
+      <div style="color:var(--muted);font-size:13px;margin-top:6px;">Let's get you set up. You can change these any time in Settings.</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.5px;display:block;margin-bottom:6px;">YOUR HOME TERMINAL</label>
+        <input type="text" id="onboardTerminal" placeholder="e.g. Smithers, BC" style="width:100%;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:12px 14px;border-radius:10px;font-size:15px;">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.5px;display:block;margin-bottom:6px;">FIRST DESTINATION</label>
+        <input type="text" id="onboardDest" placeholder="e.g. Prince Rupert, BC" style="width:100%;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:12px 14px;border-radius:10px;font-size:15px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="number" id="onboardMiles" placeholder="One-way miles (optional)" style="flex:1;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:12px 14px;border-radius:10px;font-size:14px;">
+        </div>
+        <div style="color:var(--muted);font-size:11px;margin-top:6px;">Rail miles — you can add more destinations in Settings later.</div>
+      </div>
+      <button onclick="completeOnboarding()" style="background:var(--red);border:none;color:#fff;padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:1px;cursor:pointer;margin-top:8px;">GET STARTED →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ YEAR WRAPPED -->
 <div id="wrappedOverlay">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
     <button onclick="closeWrapped()" style="background:none;border:1px solid var(--track);color:var(--muted);padding:8px 16px;border-radius:8px;font-size:14px;cursor:pointer;">✕ Close</button>
@@ -414,7 +465,7 @@ const MINS  = [0,5,10,15,20,25,30,35,40,45,50,55];
 const DAYS  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS= ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-const DEFAULT_SETTINGS = { rate:23, maxMeals:3, deduct:50, origin:'Smithers', dest:'Prince Rupert', year:2025, apiKey:'' };
+const DEFAULT_SETTINGS = { rate:23, maxMeals:3, deduct:50, homeTerminal:'', year:new Date().getFullYear() };
 
 let cfg         = { ...DEFAULT_SETTINGS };
 let activeYear  = 2025;
@@ -432,6 +483,17 @@ let gridPickerTarget = null;
 // ══════════════════════════════════════════════════════════════════
 const tripsKey  = yr => `cn_trips_${yr}`;
 const cfgKey    = 'cn_cfg';
+const routesKey = 'cn_routes';
+
+const DEFAULT_ROUTES = [
+  { id:'r1', name:'Prince Rupert, BC', miles:null, isDefault:true }
+];
+
+function loadRoutes() {
+  try { const s = localStorage.getItem(routesKey); return s ? JSON.parse(s) : [...DEFAULT_ROUTES]; } catch(e) { return [...DEFAULT_ROUTES]; }
+}
+function saveRoutes(routes) { localStorage.setItem(routesKey, JSON.stringify(routes)); }
+let routes = loadRoutes();
 
 function loadCfg() {
   try { const s = localStorage.getItem(cfgKey); if (s) cfg = { ...DEFAULT_SETTINGS, ...JSON.parse(s) }; } catch(e) {}
@@ -458,32 +520,34 @@ function getAllYears() {
 // ══════════════════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
   loadCfg();
+  routes = loadRoutes();
   activeYear = cfg.year || new Date().getFullYear();
   trips = loadTripsForYear(activeYear);
 
-  // Default today's date in form
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('depDate').value = today;
   document.getElementById('retDate').value = today;
 
   applySettings();
+  renderRouteDropdown();
+  renderRouteManager();
   renderTrips();
   renderBulkGrid();
 
-  // Service worker
+  // Show onboarding if no home terminal set
+  if (!cfg.homeTerminal) showOnboarding();
+
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 });
 
 function applySettings() {
-  document.getElementById('setRate').value     = cfg.rate;
-  document.getElementById('setMaxMeals').value = cfg.maxMeals;
-  document.getElementById('setDeduct').value   = cfg.deduct;
-  document.getElementById('setOrigin').value   = cfg.origin;
-  document.getElementById('setDest').value     = cfg.dest;
-  document.getElementById('setYear').value     = cfg.year || activeYear;
-  document.getElementById('setApiKey').value   = cfg.apiKey || '';
+  document.getElementById('setRate').value         = cfg.rate;
+  document.getElementById('setMaxMeals').value     = cfg.maxMeals;
+  document.getElementById('setDeduct').value       = cfg.deduct;
+  document.getElementById('setHomeTerminal').value = cfg.homeTerminal || '';
+  document.getElementById('setYear').value         = cfg.year || activeYear;
   document.getElementById('sheet-year-label').textContent = 'Tax Year: ' + activeYear;
   document.getElementById('data-year-label').textContent  = 'Tax Year: ' + activeYear;
 }
@@ -532,15 +596,16 @@ function openGridTimePicker(row, field) {
 
 function buildDrum(id, items, selectedIdx) {
   const drum = document.getElementById(id);
-  drum.innerHTML = items.map(v => `<div class="drum-item">${v}</div>`).join('');
-  requestAnimationFrame(() => {
-    drum.scrollTop = selectedIdx * 40;
-  });
+  drum.innerHTML = '<div style="height:80px;flex-shrink:0;"></div>' +
+    items.map(v => `<div class="drum-item">${v}</div>`).join('') +
+    '<div style="height:80px;flex-shrink:0;"></div>';
+  requestAnimationFrame(() => { drum.scrollTop = selectedIdx * 40; });
 }
 
 function getSelectedIdx(drumId) {
   const drum = document.getElementById(drumId);
-  return Math.max(0, Math.min(Math.round(drum.scrollTop / 40), document.getElementById(drumId).children.length - 1));
+  const items = drum.querySelectorAll('.drum-item');
+  return Math.max(0, Math.min(Math.round(drum.scrollTop / 40), items.length - 1));
 }
 
 function confirmPicker() {
@@ -625,9 +690,20 @@ function fmtDate(d) {
 }
 
 function calcMeals(hours) {
-  const perInterval = Math.floor(hours / 4);
-  const maxPerDay = Math.floor(hours / 24) * cfg.maxMeals + Math.min(cfg.maxMeals, Math.floor((hours % 24) / 4));
-  return Math.min(perInterval, maxPerDay);
+  // CRA: 1 meal per 4hrs, max 3 per 24hr period from departure
+  // First period: must complete 4hrs to earn a meal (floor)
+  // Each new 24hr period: crossing the boundary earns meal 1 immediately (ceil)
+  if (hours <= 0) return 0;
+  const fullDays = Math.floor(hours / 24);
+  const remainder = hours % 24;
+  let meals = fullDays * cfg.maxMeals;
+  if (remainder === 0) return meals;
+  if (fullDays === 0) {
+    meals += Math.min(cfg.maxMeals, Math.floor(remainder / 4));
+  } else {
+    meals += Math.min(cfg.maxMeals, Math.ceil(remainder / 4));
+  }
+  return meals;
 }
 
 function getTrainSeries(id) {
@@ -648,14 +724,16 @@ function getTrainSeries(id) {
 // ══════════════════════════════════════════════════════════════════
 function updatePreview() {
   const depDate = document.getElementById('depDate').value;
-  const depTime = document.getElementById('depTimeBtn').dataset.val;
+  const leg1On  = document.getElementById('depTimeBtn').dataset.val;
+  const leg1Off = document.getElementById('arrDestBtn').dataset.val;
   const retDate = document.getElementById('retDate').value;
-  const retTime = document.getElementById('retTimeBtn').dataset.val;
+  const leg2On  = document.getElementById('depDestBtn').dataset.val;
+  const leg2Off = document.getElementById('retTimeBtn').dataset.val;
 
-  if (!depDate || !depTime || !retDate || !retTime) return;
+  if (!depDate || !leg1On || !retDate || !leg2Off) return;
 
-  const dep = new Date(depDate + 'T' + depTime);
-  const ret = new Date(retDate + 'T' + retTime);
+  const dep   = new Date(depDate + 'T' + leg1On);
+  const ret   = new Date(retDate + 'T' + leg2Off);
   const hours = (ret - dep) / 3600000;
   if (hours <= 0) return;
 
@@ -665,25 +743,30 @@ function updatePreview() {
 
   document.getElementById('prevHours').textContent  = hours.toFixed(1) + 'h';
   document.getElementById('prevMeals').textContent  = meals;
-  document.getElementById('prevGross').textContent  = '$' + gross.toFixed(2);
   document.getElementById('prevDeduct').textContent = '$' + deduct.toFixed(2);
 
-  const arrDestTime = document.getElementById('arrDestBtn').dataset.val;
-  const depDestTime = document.getElementById('depDestBtn').dataset.val;
+  // Leg 1 on duty duration
+  if (leg1Off) {
+    let l1off = new Date(depDate + 'T' + leg1Off);
+    if (l1off <= dep) l1off = new Date(l1off.getTime() + 86400000); // midnight cross
+    const l1h = (l1off - dep) / 3600000;
+    document.getElementById('prevLeg1').textContent = l1h.toFixed(1) + 'h';
 
-  if (arrDestTime && depDestTime) {
-    // Bunkhouse times relative to dep date (layover spans overnight sometimes)
-    const arrD = new Date(depDate + 'T' + arrDestTime);
-    const depD = new Date(depDate + 'T' + depDestTime);
-    // If depDest is before arrDest, it must be next day
-    if (depD <= arrD) depD.setDate(depD.getDate() + 1);
-    const bunk = Math.max(0, (depD - arrD) / 3600000);
-    const onDuty = Math.max(0, hours - bunk);
-    document.getElementById('prevBunk').textContent   = bunk.toFixed(1) + 'h';
-    document.getElementById('prevOnDuty').textContent = onDuty.toFixed(1) + 'h';
+    // Bunkhouse = Leg 1 off → Leg 2 on
+    if (leg2On) {
+      const l2on = new Date(retDate + 'T' + leg2On);
+      const bunk = (l2on - l1off) / 3600000;
+      document.getElementById('prevBunk').textContent = bunk > 0 ? bunk.toFixed(1) + 'h' : '—';
+      // Leg 2 on duty
+      const l2h = (ret - l2on) / 3600000;
+      const el2 = document.getElementById('prevLeg2');
+      if (el2) el2.textContent = l2h > 0 ? l2h.toFixed(1) + 'h' : '—';
+    } else {
+      document.getElementById('prevBunk').textContent = '—';
+    }
   } else {
-    document.getElementById('prevBunk').textContent   = '—';
-    document.getElementById('prevOnDuty').textContent = '—';
+    document.getElementById('prevLeg1').textContent = '—';
+    document.getElementById('prevBunk').textContent = '—';
   }
 }
 
@@ -736,13 +819,19 @@ function saveTrip() {
   const deduct  = gross * (cfg.deduct / 100);
   const tripYear = parseInt(depDate.split('-')[0]);
 
+  const routeSel = document.getElementById('routeSelect');
+  const selRoute = routes.find(r => r.id === routeSel.value) || routes[0] || {};
+
   const trip = {
     id: Date.now() + Math.random(),
     depDate, depTime: leg1On,
     retDate, retTime: leg2Off,
     leg1OffTime: leg1Off || '',
     leg2OnTime:  leg2On  || '',
-    origin: cfg.origin, dest: cfg.dest,
+    origin: cfg.homeTerminal || 'Home',
+    dest:   selRoute.name || '',
+    routeId: selRoute.id || '',
+    miles:   selRoute.miles || null,
     notes:     document.getElementById('notes').value.trim(),
     trainOut:  document.getElementById('trainOut').value.trim().toUpperCase(),
     trainBack: document.getElementById('trainBack').value.trim().toUpperCase(),
@@ -779,6 +868,114 @@ function resetForm() {
   ['prevLeg1','prevBunk','prevLeg2','prevHours','prevMeals','prevDeduct'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = '—';
   });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ONBOARDING
+// ══════════════════════════════════════════════════════════════════
+function showOnboarding() {
+  document.getElementById('onboardingOverlay').style.display = 'flex';
+}
+
+function completeOnboarding() {
+  const terminal = document.getElementById('onboardTerminal').value.trim();
+  if (!terminal) { showToast('Enter your home terminal', true); return; }
+  cfg.homeTerminal = terminal;
+
+  // Save first destination if provided
+  const destName  = document.getElementById('onboardDest').value.trim();
+  const destMiles = parseFloat(document.getElementById('onboardMiles').value) || null;
+  if (destName) {
+    routes = [{ id:'r'+Date.now(), name:destName, miles:destMiles, isDefault:true }];
+    saveRoutes(routes);
+  }
+
+  saveCfg();
+  applySettings();
+  renderRouteDropdown();
+  renderRouteManager();
+  document.getElementById('onboardingOverlay').style.display = 'none';
+  showToast('Welcome to Trip Track 🚂');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ROUTE MANAGEMENT
+// ══════════════════════════════════════════════════════════════════
+function renderRouteDropdown() {
+  const sel = document.getElementById('routeSelect');
+  if (!sel) return;
+  const defaultId = (routes.find(r => r.isDefault) || routes[0] || {}).id;
+  sel.innerHTML = routes.map(r =>
+    `<option value="${r.id}" ${r.id===defaultId?'selected':''}>${r.name}${r.miles?' ('+r.miles+' mi)':''}</option>`
+  ).join('');
+}
+
+function renderRouteManager() {
+  const el = document.getElementById('routeManagerList');
+  if (!el) return;
+  if (!routes.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0;">No destinations yet.</div>';
+    return;
+  }
+  el.innerHTML = routes.map(r => `
+    <div class="route-item" id="routeItem_${r.id}">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;color:var(--light);font-size:14px;">${r.name}${r.isDefault?' <span style="color:var(--gold);font-size:11px;">★ DEFAULT</span>':''}</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:2px;">${r.miles ? r.miles+' mi one-way' : 'Miles not set'}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        ${!r.isDefault ? `<button onclick="setDefaultRoute('${r.id}')" style="background:var(--track);border:none;color:var(--gold);padding:5px 9px;border-radius:6px;font-size:12px;cursor:pointer;">★</button>` : ''}
+        <button onclick="editRoute('${r.id}')" style="background:var(--track);border:none;color:var(--light);padding:5px 9px;border-radius:6px;font-size:12px;cursor:pointer;">Edit</button>
+        <button onclick="deleteRoute('${r.id}')" style="background:rgba(227,24,55,0.15);border:1px solid rgba(227,24,55,0.3);color:var(--red);padding:5px 9px;border-radius:6px;font-size:12px;cursor:pointer;">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addRoute() {
+  const name  = document.getElementById('newRouteName').value.trim();
+  const miles = parseFloat(document.getElementById('newRouteMiles').value) || null;
+  if (!name) { showToast('Enter a destination name', true); return; }
+  const newRoute = { id:'r'+Date.now(), name, miles, isDefault: routes.length === 0 };
+  routes.push(newRoute);
+  saveRoutes(routes);
+  document.getElementById('newRouteName').value  = '';
+  document.getElementById('newRouteMiles').value = '';
+  renderRouteDropdown();
+  renderRouteManager();
+  showToast('Destination added ✓');
+}
+
+function editRoute(id) {
+  const r = routes.find(x => x.id === id);
+  if (!r) return;
+  const name  = prompt('Destination name:', r.name);
+  if (name === null) return;
+  const miles = prompt('One-way miles (leave blank if unknown):', r.miles || '');
+  r.name  = name.trim() || r.name;
+  r.miles = miles.trim() ? parseFloat(miles) : null;
+  saveRoutes(routes);
+  renderRouteDropdown();
+  renderRouteManager();
+  showToast('Destination updated ✓');
+}
+
+function deleteRoute(id) {
+  if (routes.length === 1) { showToast('Need at least one destination', true); return; }
+  routes = routes.filter(r => r.id !== id);
+  if (!routes.find(r => r.isDefault)) routes[0].isDefault = true;
+  saveRoutes(routes);
+  renderRouteDropdown();
+  renderRouteManager();
+  showToast('Destination removed ✓');
+}
+
+function setDefaultRoute(id) {
+  routes.forEach(r => r.isDefault = r.id === id);
+  saveRoutes(routes);
+  renderRouteDropdown();
+  renderRouteManager();
+  showToast('Default route updated ✓');
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -917,13 +1114,11 @@ function deleteTrip() {
 // SETTINGS
 // ══════════════════════════════════════════════════════════════════
 function saveSettings() {
-  cfg.rate     = parseFloat(document.getElementById('setRate').value) || 23;
-  cfg.maxMeals = parseInt(document.getElementById('setMaxMeals').value) || 3;
-  cfg.deduct   = parseFloat(document.getElementById('setDeduct').value) || 50;
-  cfg.origin   = document.getElementById('setOrigin').value.trim() || 'Smithers';
-  cfg.dest     = document.getElementById('setDest').value.trim() || 'Prince Rupert';
-  cfg.apiKey   = document.getElementById('setApiKey').value.trim();
-  const newYear = parseInt(document.getElementById('setYear').value);
+  cfg.rate         = parseFloat(document.getElementById('setRate').value) || 23;
+  cfg.maxMeals     = parseInt(document.getElementById('setMaxMeals').value) || 3;
+  cfg.deduct       = parseFloat(document.getElementById('setDeduct').value) || 50;
+  cfg.homeTerminal = document.getElementById('setHomeTerminal').value.trim();
+  const newYear    = parseInt(document.getElementById('setYear').value);
   if (newYear >= 2020 && newYear <= 2040) {
     cfg.year = newYear;
     if (newYear !== activeYear) {
@@ -1097,12 +1292,24 @@ function drawWrapped() {
   }
 
   // Stats
-  const tm = trips.reduce((s,t) => s+t.meals,  0);
-  const td = trips.reduce((s,t) => s+t.deduct, 0);
-  const th = trips.reduce((s,t) => s+t.hours,  0);
-  const tb = trips.reduce((s,t) => s+(t.bunkhouseH||0), 0);
-  const days = Math.round(th / 24);
-  const km   = Math.round(trips.length * 2 * 740); // Smithers↔Rupert ~740km
+  const td  = trips.reduce((s,t) => s+t.deduct, 0);
+  const th  = trips.reduce((s,t) => s+t.hours,  0);
+  const tb  = trips.reduce((s,t) => s+(t.bunkhouseH||0), 0);
+  const ton = trips.reduce((s,t) => s+(t.onDutyH||0), 0);
+  const totalMiles = trips.reduce((s,t) => s + (t.miles ? t.miles*2 : 0), 0);
+  const longestH = trips.reduce((max,t) => t.hours > max ? t.hours : max, 0);
+
+  // Most active day of week
+  const dowCount = Array(7).fill(0);
+  trips.forEach(t => { const d = new Date(t.depDate+'T12:00'); dowCount[d.getDay()]++; });
+  const busyDayIdx = dowCount.indexOf(Math.max(...dowCount));
+  const busyDay = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][busyDayIdx];
+
+  // Most active departure hour
+  const hourCount = Array(24).fill(0);
+  trips.forEach(t => { if (t.depTime) hourCount[parseInt(t.depTime.split(':')[0])]++; });
+  const busyHourIdx = hourCount.indexOf(Math.max(...hourCount));
+  const busyHourStr = busyHourIdx === 0 ? '12am' : busyHourIdx < 12 ? busyHourIdx+'am' : busyHourIdx === 12 ? '12pm' : (busyHourIdx-12)+'pm';
 
   // Header
   ctx.fillStyle = '#f0a500';
@@ -1114,59 +1321,54 @@ function drawWrapped() {
   ctx.font = '22px sans-serif';
   ctx.fillText(`${activeYear} YEAR WRAPPED`, W/2, 130);
 
-  // Divider
   ctx.strokeStyle = 'rgba(240,165,0,0.4)';
   ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(80, 155); ctx.lineTo(W-80, 155); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(80,155); ctx.lineTo(W-80,155); ctx.stroke();
 
-  // Stat boxes
+  // 8 stat boxes — 2×4 grid
   const stats = [
-    { label:'TRIPS', value: trips.length, color:'#e8edf5' },
-    { label:'HOURS AWAY', value: th.toFixed(0)+'h', color:'#f0a500' },
-    { label:'MEALS CLAIMED', value: tm, color:'#f0a500' },
-    { label:'DEDUCTIBLE', value:'$'+td.toFixed(0), color:'#1a9a5a' },
-    { label:'BUNKHOUSE HOURS', value: tb.toFixed(0)+'h', color:'#a855f7' },
-    { label:'KM ON RAILS', value: km.toLocaleString(), color:'#e31837' },
+    { label:'TRIPS',           value: trips.length,                        color:'#e8edf5' },
+    { label:'MILES ON RAILS',  value: totalMiles ? totalMiles.toLocaleString() : '—',  color:'#e31837' },
+    { label:'HOURS AWAY',      value: th.toFixed(0)+'h',                   color:'#f0a500' },
+    { label:'TIME ON DUTY',    value: ton.toFixed(0)+'h',                  color:'#f0a500' },
+    { label:'BUNKHOUSE',       value: tb.toFixed(0)+'h',                   color:'#a855f7' },
+    { label:'LONGEST TRIP',    value: longestH.toFixed(1)+'h',             color:'#38bdf8' },
+    { label:'DEDUCTIBLE',      value: '$'+td.toFixed(0),                   color:'#1a9a5a' },
+    { label:'MOST ACTIVE',     value: busyDay+' '+busyHourStr,             color:'#e8edf5' },
   ];
 
-  const boxW = 280, boxH = 130, cols = 2, rows = 3;
-  const startX = (W - cols * boxW - 30) / 2;
-  const startY = 190;
+  const boxW = 280, boxH = 120, cols = 2;
+  const startX = (W - cols*boxW - 30) / 2;
+  const startY = 185;
 
   stats.forEach((s, i) => {
-    const col = i % 2, row = Math.floor(i / 2);
-    const x = startX + col * (boxW + 30);
-    const y = startY + row * (boxH + 20);
+    const col = i % 2, row = Math.floor(i/2);
+    const x = startX + col*(boxW+30);
+    const y = startY + row*(boxH+16);
 
     ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.beginPath();
-    ctx.roundRect(x, y, boxW, boxH, 14);
-    ctx.fill();
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(x,y,boxW,boxH,14); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth=1; ctx.stroke();
 
     ctx.fillStyle = s.color;
-    ctx.font = 'bold 52px sans-serif';
+    ctx.font = 'bold 46px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(s.value, x + boxW/2, y + 70);
+    ctx.fillText(s.value, x+boxW/2, y+65);
 
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.font = '14px sans-serif';
-    ctx.fillText(s.label, x + boxW/2, y + 100);
+    ctx.font = '13px sans-serif';
+    ctx.fillText(s.label, x+boxW/2, y+92);
   });
 
-  // Bottom message
-  const daysAway = Math.round(th / 24);
+  // Footer
+  const daysAway = Math.round(th/24);
   ctx.fillStyle = 'rgba(255,255,255,0.8)';
   ctx.font = '22px sans-serif';
   ctx.textAlign = 'center';
-  const msg = `You spent ${daysAway} day${daysAway!==1?'s':''} away from home in ${activeYear}.`;
-  ctx.fillText(msg, W/2, H - 100);
+  ctx.fillText(`You spent ${daysAway} day${daysAway!==1?'s':''} away from home in ${activeYear}.`, W/2, H-100);
   ctx.fillStyle = 'rgba(255,255,255,0.5)';
   ctx.font = '20px sans-serif';
-  ctx.fillText("That's dedication. 🚂", W/2, H - 65);
+  ctx.fillText("That's dedication. 🚂", W/2, H-65);
 }
 
 function saveWrapped() {
@@ -1234,10 +1436,12 @@ function exportPDF() {
   const rows = sorted.map((t,i) => `<tr>
     <td>${i+1}</td><td>${fmtDate(t.depDate)}</td><td>${t.depTime}</td>
     <td>${fmtDate(t.retDate)}</td><td>${t.retTime}</td>
+    <td>${t.origin||cfg.origin} → ${t.dest||cfg.dest}</td>
     <td>${t.hours.toFixed(1)}</td>
     <td>${t.onDutyH ? t.onDutyH.toFixed(1) : '—'}</td>
     <td>${t.bunkhouseH ? t.bunkhouseH.toFixed(1) : '—'}</td>
     <td>${t.meals}</td><td>$${t.gross.toFixed(2)}</td><td>$${t.deduct.toFixed(2)}</td>
+    <td>${t.trainOut||''}${t.trainBack?' / '+t.trainBack:''}</td>
     <td>${t.notes||''}</td>
   </tr>`).join('');
 
@@ -1270,9 +1474,9 @@ tfoot td { background:#f0f4ff; font-weight:bold; border-top:2px solid #1a1a2e; }
   <div class="mbox"><div class="lbl">Deductible (Line 22900)</div><div class="val g">$${td.toFixed(2)}</div></div>
 </div>
 <table>
-<thead><tr><th>#</th><th>Dep Date</th><th>Dep Time</th><th>Ret Date</th><th>Ret Time</th><th>Away h</th><th>On Duty</th><th>Bunkhouse</th><th>Meals</th><th>Gross</th><th>Deductible</th><th>Notes</th></tr></thead>
+<thead><tr><th>#</th><th>Dep Date</th><th>Dep Time</th><th>Ret Date</th><th>Ret Time</th><th>Route</th><th>Away h</th><th>On Duty</th><th>Bunkhouse</th><th>Meals</th><th>Gross</th><th>Deductible</th><th>Trains</th><th>Notes</th></tr></thead>
 <tbody>${rows}</tbody>
-<tfoot><tr><td colspan="5">TOTALS — ${sorted.length} trips</td><td>${ta.toFixed(1)}</td><td>—</td><td>—</td><td>${tm}</td><td>$${tg.toFixed(2)}</td><td>$${td.toFixed(2)}</td><td></td></tr></tfoot>
+<tfoot><tr><td colspan="6">TOTALS — ${sorted.length} trips</td><td>${ta.toFixed(1)}</td><td>—</td><td>—</td><td>${tm}</td><td>$${tg.toFixed(2)}</td><td>$${td.toFixed(2)}</td><td></td><td></td></tr></tfoot>
 </table>
 <div class="footer">
 <strong>CRA Reference:</strong> Simplified method per IT-518R. Railway employees claim 50% on <strong>Line 22900</strong>. Supporting docs: <strong>TL2</strong> and <strong>T2200</strong>. Retain records 6 years.<br>
