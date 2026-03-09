@@ -58,12 +58,13 @@ header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; pad
 /* FORM */
 .section-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; margin-top: 4px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; min-width: 0; overflow: hidden; }
 .form-group label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; }
 .form-group input[type=text], .form-group input[type=date], .form-group input[type=number], .form-group input[type=password], .form-group select {
   background: var(--steel); border: 1.5px solid var(--track); border-radius: 10px;
-  color: var(--light); font-family: 'Barlow', sans-serif; font-size: 15px; padding: 11px 13px; outline: none; width: 100%;
+  color: var(--light); font-family: 'Barlow', sans-serif; font-size: 15px; padding: 11px 10px; outline: none; width: 100%; min-width: 0; box-sizing: border-box;
 }
+.form-group input[type=date] { font-size: 14px; }
 .form-group input:focus { border-color: var(--gold); }
 .time-btn { background: var(--steel); border: 1.5px solid var(--track); border-radius: 10px; color: var(--muted); font-size: 15px; padding: 11px 13px; text-align: left; width: 100%; cursor: pointer; font-family: 'Barlow', sans-serif; transition: border-color 0.2s; }
 .time-btn.set { border-color: var(--gold); color: var(--light); }
@@ -143,12 +144,6 @@ header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; pad
 .chart-section { margin-bottom: 22px; }
 .chart-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 1px; color: var(--light); margin-bottom: 10px; text-transform: uppercase; }
 canvas.chart { width: 100% !important; border-radius: 10px; background: var(--steel); display: block; }
-
-/* IMPORT GRID */
-.grid-cell { background: none; border: none; color: var(--muted); font-size: 13px; padding: 9px 6px; cursor: pointer; width: 100%; text-align: left; font-family: 'Barlow', sans-serif; }
-.grid-cell.set { color: var(--light); font-weight: 600; }
-.grid-train { background: none; border: none; color: var(--light); font-size: 13px; padding: 9px 4px; width: 60px; font-family: monospace; outline: none; text-transform: uppercase; }
-.grid-train::placeholder { color: var(--muted); text-transform: none; }
 
 /* MODAL */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; }
@@ -296,27 +291,44 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
 <!-- ═══════════════════════════════════════════════ TAB: IMPORT -->
 <div class="tab" id="tab-cats">
   <header>
-    <div class="cn-logo" style="background:var(--gold);color:#000;">✏️</div>
-    <div class="header-text"><h1>Quick Entry</h1><p>Tap cells to fill · empty rows skipped on import</p></div>
+    <div class="cn-logo" style="background:var(--green);color:#fff;">💾</div>
+    <div class="header-text"><h1>Backup</h1><p>Export &amp; restore your trip data</p></div>
   </header>
-  <div class="sheet-wrap" style="margin-bottom:12px;">
-    <table class="sheet-table" id="bulkGrid" style="min-width:480px;">
-      <thead><tr>
-        <th style="width:26px;text-align:center;">#</th>
-        <th>Date Out</th><th>Time Out</th>
-        <th>Date Back</th><th>Time Back</th>
-        <th>Train</th>
-        <th style="width:26px;"></th>
-      </tr></thead>
-      <tbody id="bulkGridBody"></tbody>
-    </table>
+
+  <div class="section-title">Export</div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
+    <button onclick="exportJSON()" style="display:flex;align-items:center;gap:12px;background:var(--steel);border:1px solid var(--track);border-radius:12px;padding:16px;cursor:pointer;text-align:left;width:100%;">
+      <span style="font-size:28px;">📦</span>
+      <div>
+        <div style="color:var(--light);font-weight:700;font-size:15px;">Full Backup (JSON)</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:2px;">All years, settings &amp; routes — can be restored</div>
+      </div>
+    </button>
+    <button onclick="exportCSV()" style="display:flex;align-items:center;gap:12px;background:var(--steel);border:1px solid var(--track);border-radius:12px;padding:16px;cursor:pointer;text-align:left;width:100%;">
+      <span style="font-size:28px;">📄</span>
+      <div>
+        <div style="color:var(--light);font-weight:700;font-size:15px;">Export CSV</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:2px;">Current year — for spreadsheets</div>
+      </div>
+    </button>
+    <button onclick="exportPDF()" style="display:flex;align-items:center;gap:12px;background:var(--steel);border:1px solid rgba(240,165,0,0.3);border-radius:12px;padding:16px;cursor:pointer;text-align:left;width:100%;">
+      <span style="font-size:28px;">📑</span>
+      <div>
+        <div style="color:var(--gold);font-weight:700;font-size:15px;">TL2 PDF Report</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:2px;">CRA-ready printable report</div>
+      </div>
+    </button>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:10px;">
-    <button onclick="bulkImport()" style="flex:1;padding:14px;background:var(--green);border:none;border-radius:12px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:1px;cursor:pointer;">✓ IMPORT TRIPS</button>
+
+  <div class="section-title">Restore</div>
+  <div style="background:var(--steel);border-radius:12px;padding:16px;margin-bottom:12px;">
+    <div style="color:var(--muted);font-size:13px;margin-bottom:14px;">Restore from a Trip Track JSON backup file. Trip data will be merged — existing trips won't be overwritten.</div>
+    <button onclick="document.getElementById('importFileInput').click()" style="width:100%;padding:14px;background:var(--navy);border:1px solid var(--track);border-radius:10px;color:var(--light);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:0.5px;cursor:pointer;">📂 Choose Backup File</button>
+    <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(event)">
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:24px;">
-    <button onclick="addBulkRow()" style="flex:1;padding:10px;background:none;border:1px solid var(--track);border-radius:10px;color:var(--gold);font-size:14px;cursor:pointer;">＋ Add Row</button>
-    <button onclick="clearBulkGrid()" style="flex:1;padding:10px;background:none;border:1px solid var(--track);border-radius:10px;color:var(--muted);font-size:14px;cursor:pointer;">🗑 Clear Grid</button>
+
+  <div style="background:rgba(227,24,55,0.08);border:1px solid rgba(227,24,55,0.2);border-radius:12px;padding:14px;">
+    <div style="color:var(--muted);font-size:12px;line-height:1.5;"><strong style="color:var(--red);">Tip:</strong> Back up monthly to iCloud or email yourself the JSON file. If you reinstall the app or switch phones, restore the JSON to get all your data back.</div>
   </div>
 </div>
 
@@ -376,7 +388,7 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
   <button class="nav-btn"        id="nav-sheet"    onclick="switchTab('sheet')">   <span class="nav-icon">📋</span><span>Review</span></button>
   <button class="nav-btn"        id="nav-data"     onclick="switchTab('data')">    <span class="nav-icon">📊</span><span>Data</span></button>
   <button class="nav-btn"        id="nav-years"    onclick="switchTab('years')">   <span class="nav-icon">📚</span><span>Books</span></button>
-  <button class="nav-btn"        id="nav-cats"     onclick="switchTab('cats')">    <span class="nav-icon">✏️</span><span>Import</span></button>
+  <button class="nav-btn"        id="nav-cats"     onclick="switchTab('cats')">    <span class="nav-icon">💾</span><span>Backup</span></button>
   <button class="nav-btn"        id="nav-settings" onclick="switchTab('settings')"><span class="nav-icon">⚙️</span><span>Settings</span></button>
 </nav>
 
@@ -473,11 +485,6 @@ let trips       = [];
 let editingId   = null;
 let pickerTarget = null;
 
-// Bulk grid state
-const GRID_ROWS = 20;
-let bulkData    = Array.from({length:GRID_ROWS}, () => ({depDate:'',depTime:'',retDate:'',retTime:'',train:''}));
-let gridPickerTarget = null;
-
 // ══════════════════════════════════════════════════════════════════
 // STORAGE HELPERS
 // ══════════════════════════════════════════════════════════════════
@@ -532,7 +539,6 @@ window.addEventListener('DOMContentLoaded', () => {
   renderRouteDropdown();
   renderRouteManager();
   renderTrips();
-  renderBulkGrid();
 
   // Show onboarding if no home terminal set
   if (!cfg.homeTerminal) showOnboarding();
@@ -615,15 +621,6 @@ function confirmPicker() {
   const m = MINS[mIdx];
   const timeStr = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
 
-  if (pickerTarget === '__grid__' && gridPickerTarget) {
-    bulkData[gridPickerTarget.row][gridPickerTarget.field] = timeStr;
-    gridPickerTarget = null;
-    pickerTarget = null;
-    closePicker();
-    renderBulkGrid();
-    return;
-  }
-
   const btnMap = { dep:'depTimeBtn', ret:'retTimeBtn', arrDest:'arrDestBtn', depDest:'depDestBtn' };
   const btn = document.getElementById(btnMap[pickerTarget]);
   if (btn) {
@@ -637,33 +634,6 @@ function confirmPicker() {
 
 function closePicker() { document.getElementById('pickerOverlay').classList.remove('open'); }
 function overlayClick(e) { if (e.target === document.getElementById('pickerOverlay')) closePicker(); }
-
-// ══════════════════════════════════════════════════════════════════
-// GRID DATE PICKER (hidden native input)
-// ══════════════════════════════════════════════════════════════════
-function openGridDatePicker(row, field) {
-  gridPickerTarget = { row, field };
-  let inp = document.getElementById('gridDateInput');
-  if (!inp) {
-    inp = document.createElement('input');
-    inp.type = 'date'; inp.id = 'gridDateInput';
-    inp.style.cssText = 'position:fixed;opacity:0;top:50%;left:50%;width:1px;height:1px;pointer-events:none;';
-    inp.addEventListener('change', onGridDatePicked);
-    document.body.appendChild(inp);
-  }
-  inp.value = bulkData[row][field] || '';
-  inp.removeAttribute('disabled');
-  inp.click(); inp.focus();
-}
-
-function onGridDatePicked(e) {
-  if (!gridPickerTarget) return;
-  const { row, field } = gridPickerTarget;
-  bulkData[row][field] = e.target.value;
-  if (field === 'depDate' && !bulkData[row].retDate) bulkData[row].retDate = e.target.value;
-  renderBulkGrid();
-  gridPickerTarget = null;
-}
 
 // ══════════════════════════════════════════════════════════════════
 // FORM HELPERS
@@ -1538,150 +1508,6 @@ function clearAll() {
   saveTripsForYear(activeYear, trips);
   renderTrips();
   showToast('All trips cleared');
-}
-
-// ══════════════════════════════════════════════════════════════════
-// BULK IMPORT GRID
-// ══════════════════════════════════════════════════════════════════
-function initCatsTab() { renderBulkGrid(); }
-
-function renderBulkGrid() {
-  const body = document.getElementById('bulkGridBody');
-  body.innerHTML = bulkData.map((row, i) => {
-    const filled = row.depDate || row.depTime || row.retDate || row.retTime || row.train;
-    return `<tr id="grow-${i}" style="${filled ? 'background:rgba(26,154,90,0.07)' : ''}">
-      <td style="color:var(--muted);font-size:11px;text-align:center;">${i+1}</td>
-      <td><button class="grid-cell ${row.depDate?'set':''}" onclick="openGridDatePicker(${i},'depDate')">${row.depDate ? fmtDate(row.depDate) : '—'}</button></td>
-      <td><button class="grid-cell ${row.depTime?'set':''}" onclick="openGridTimePicker(${i},'depTime')">${row.depTime || '—'}</button></td>
-      <td><button class="grid-cell ${row.retDate?'set':''}" onclick="openGridDatePicker(${i},'retDate')">${row.retDate ? fmtDate(row.retDate) : '—'}</button></td>
-      <td><button class="grid-cell ${row.retTime?'set':''}" onclick="openGridTimePicker(${i},'retTime')">${row.retTime || '—'}</button></td>
-      <td><input class="grid-train" type="text" value="${row.train}" placeholder="Q199" oninput="bulkData[${i}].train=this.value.toUpperCase();updateGridRow(${i})"></td>
-      <td><button onclick="clearGridRow(${i})" style="background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px;">✕</button></td>
-    </tr>`;
-  }).join('');
-}
-
-function updateGridRow(i) {
-  const row = bulkData[i];
-  const tr = document.getElementById('grow-'+i);
-  if (tr) tr.style.background = (row.depDate||row.depTime||row.retDate||row.retTime||row.train) ? 'rgba(26,154,90,0.07)' : '';
-}
-
-function clearGridRow(i) {
-  bulkData[i] = {depDate:'',depTime:'',retDate:'',retTime:'',train:''};
-  renderBulkGrid();
-}
-
-function addBulkRow() {
-  bulkData.push({depDate:'',depTime:'',retDate:'',retTime:'',train:''});
-  renderBulkGrid();
-}
-
-function clearBulkGrid() {
-  bulkData = Array.from({length:GRID_ROWS}, () => ({depDate:'',depTime:'',retDate:'',retTime:'',train:''}));
-  renderBulkGrid();
-}
-
-function bulkImport() {
-  const toAdd = bulkData.filter(r => r.depDate && r.depTime && r.retDate && r.retTime);
-  if (!toAdd.length) { showToast('Fill in at least date out, time out, date back, time back', true); return; }
-  let added = 0, skipped = 0;
-  toAdd.forEach(r => {
-    const dep = new Date(r.depDate+'T'+r.depTime);
-    const ret = new Date(r.retDate+'T'+r.retTime);
-    const hours = (ret - dep) / 3600000;
-    if (hours <= 0) { skipped++; return; }
-    const meals  = calcMeals(hours);
-    const gross  = meals * cfg.rate;
-    const deduct = gross * (cfg.deduct / 100);
-    const yr = parseInt(r.depDate.split('-')[0]);
-    const yt = loadTripsForYear(yr);
-    if (yt.find(x => x.depDate===r.depDate && x.depTime===r.depTime)) { skipped++; return; }
-    const trip = {
-      id: Date.now()+Math.random(),
-      depDate:r.depDate, depTime:r.depTime,
-      retDate:r.retDate, retTime:r.retTime,
-      arrDestTime:'', depDestTime:'',
-      origin:cfg.origin, dest:cfg.dest,
-      notes:'', trainOut:r.train, trainBack:'',
-      series: getTrainSeries(r.train),
-      hours, meals, gross, deduct,
-      rate:cfg.rate, deductPct:cfg.deduct,
-      leg1h:0, leg2h:0, bunkhouseH:0, onDutyH:0
-    };
-    yt.push(trip);
-    saveTripsForYear(yr, yt);
-    if (yr === activeYear) trips = yt;
-    added++;
-  });
-  clearBulkGrid();
-  renderTrips();
-  let msg = `Imported ${added} trip${added!==1?'s':''}`;
-  if (skipped) msg += `, ${skipped} skipped`;
-  showToast(msg + ' ✓');
-  switchTab('sheet');
-}
-
-// ══════════════════════════════════════════════════════════════════
-// SCREENSHOT IMPORT (AI)
-// ══════════════════════════════════════════════════════════════════
-async function handleCatsImages(e) {
-  const files = [...e.target.files]; if (!files.length) return;
-  if (!cfg.apiKey) { showToast('Add API key in Settings first', true); return; }
-  showToast('Scanning ' + files.length + ' screenshot' + (files.length!==1?'s':'') + '…');
-  const toBase64 = f => new Promise((res,rej) => { const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(f); });
-  const allEvents = [];
-  for (const file of files) {
-    try {
-      const b64 = await toBase64(file);
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', 'anthropic-dangerous-allow-browser':'true', 'x-api-key':cfg.apiKey },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 2000,
-          messages: [{ role:'user', content:[
-            { type:'image', source:{ type:'base64', media_type:file.type, data:b64 } },
-            { type:'text', text:`This is a CN Rail CATS Hours of Service log screenshot. Extract every duty event row you can see.
-Each row has: start date, start time, end date, end time, and a train/event ID (e.g. Q199, U753, DHT098, G846, C740).
-Return ONLY a valid JSON array with no markdown or extra text:
-[{"startDate":"2025-01-02","startTime":"15:50","endDate":"2025-01-03","endTime":"01:15","trainId":"Q199"},...]
-Use YYYY-MM-DD for dates, HH:MM 24h for times. If train ID not visible, use empty string. Extract ALL rows visible.` }
-          ]}]
-        })
-      });
-      const data = await resp.json();
-      if (data.error) { showToast('API error: ' + data.error.message, true); return; }
-      const txt   = data.content.map(c => c.text||'').join('');
-      const clean = txt.replace(/```json|```/g,'').trim();
-      const parsed = JSON.parse(clean);
-      allEvents.push(...parsed);
-    } catch(err) {
-      console.error(err);
-      showToast('Error: ' + err.message, true);
-      return;
-    }
-  }
-  if (!allEvents.length) { showToast('No events found in screenshots', true); return; }
-
-  // Convert events → bulk grid rows (pair them up as trips)
-  const events = allEvents.sort((a,b) => (a.startDate+a.startTime).localeCompare(b.startDate+b.startTime));
-  // Each event = one leg; fill grid sequentially
-  clearBulkGrid();
-  // Ensure enough rows
-  while (bulkData.length < events.length) bulkData.push({depDate:'',depTime:'',retDate:'',retTime:'',train:''});
-  events.forEach((ev, i) => {
-    if (i < bulkData.length) {
-      bulkData[i].depDate = ev.startDate || '';
-      bulkData[i].depTime = ev.startTime || '';
-      bulkData[i].retDate = ev.endDate   || '';
-      bulkData[i].retTime = ev.endTime   || '';
-      bulkData[i].train   = ev.trainId   || '';
-    }
-  });
-  renderBulkGrid();
-  showToast(`Found ${events.length} events — review and import ✓`);
-  switchTab('cats');
 }
 
 // ══════════════════════════════════════════════════════════════════
