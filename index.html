@@ -30,7 +30,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html { height: -webkit-fill-available; background: var(--dark); }
 body { min-height: 100vh; min-height: -webkit-fill-available; background: var(--dark); color: var(--light); font-family: 'Barlow', sans-serif; overflow: hidden; }
-.app { height: 100vh; height: -webkit-fill-available; display: flex; flex-direction: column; overflow: hidden; }
+.app { height: 100vh; height: -webkit-fill-available; display: flex; flex-direction: column; overflow: hidden; padding-top: env(safe-area-inset-top, 0px); }
 
 /* TABS */
 .tab { display: none; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 16px calc(100px + var(--sab)); max-width: 860px; margin: 0 auto; width: 100%; }
@@ -80,6 +80,21 @@ header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; pad
 .leg-label::after { content: ''; flex: 1; height: 1px; background: var(--track); }
 .layover-label { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin: 16px 0 8px; display: flex; align-items: center; gap: 8px; }
 .layover-label::after { content: ''; flex: 1; height: 1px; background: var(--track); }
+
+.inline-duration { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 6px 0 4px; padding: 0 2px; }
+.inline-duration-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.inline-duration-value { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: var(--gold); background: rgba(240,165,0,0.1); border: 1px solid rgba(240,165,0,0.25); border-radius: 8px; padding: 2px 10px; min-width: 60px; text-align: center; }
+
+.bunkhouse-strip { display: flex; align-items: center; gap: 8px; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 10px; padding: 10px 14px; margin: 8px 0; }
+.bunkhouse-label { font-size: 13px; color: rgba(168,85,247,0.9); font-weight: 600; flex: 1; }
+.bunkhouse-value { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: #a855f7; }
+
+.advanced-fields { display: none; margin: 6px 0; }
+.advanced-fields.visible { display: block; }
+.adv-btn { border-color: rgba(56,189,248,0.3) !important; color: #38bdf8 !important; }
+.adv-btn.set { border-color: #38bdf8 !important; color: #fff !important; }
+.adv-duration-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 4px; }
+.adv-chip { font-size: 11px; font-weight: 600; color: #38bdf8; background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2); border-radius: 6px; padding: 4px 8px; white-space: nowrap; }
 
 /* DUTY PREVIEW */
 .duty-preview { background: var(--steel); border: 1px solid var(--track); border-radius: 14px; padding: 14px; margin: 14px 0; }
@@ -193,9 +208,23 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
 
   <div class="section-title">Log a Trip</div>
 
+  <!-- Advanced mode + Role toggle bar -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+    <div style="flex:1;display:flex;align-items:center;gap:10px;background:var(--steel);border-radius:10px;padding:10px 14px;">
+      <span style="font-size:12px;color:var(--muted);font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Advanced</span>
+      <div id="advancedToggle" onclick="toggleAdvancedMode()" style="width:42px;height:24px;border-radius:12px;background:var(--track);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;">
+        <div id="advancedThumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:9px;background:#fff;transition:transform 0.2s;"></div>
+      </div>
+    </div>
+    <div id="roleToggle" style="display:flex;background:var(--steel);border-radius:10px;overflow:hidden;flex-shrink:0;">
+      <button id="roleEng" onclick="setRole('engineer')" style="padding:10px 14px;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.5px;cursor:pointer;background:var(--red);color:#fff;">ENG</button>
+      <button id="roleCon" onclick="setRole('conductor')" style="padding:10px 14px;border:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.5px;cursor:pointer;background:transparent;color:var(--muted);">CNDR</button>
+    </div>
+  </div>
+
   <div class="form-group" style="margin-bottom:12px;">
     <label>Destination</label>
-    <select id="routeSelect" style="width:100%;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:12px 14px;border-radius:10px;font-size:15px;font-family:'Barlow',sans-serif;">
+    <select id="routeSelect" style="width:100%;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:12px 14px;border-radius:10px;font-size:16px;font-family:'Barlow',sans-serif;">
     </select>
   </div>
 
@@ -209,6 +238,30 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     <div class="form-group"><label>Off Duty</label><button class="time-btn" id="arrDestBtn" onclick="openPicker('arrDest')">Tap to set</button></div>
   </div>
 
+  <!-- Advanced: Leg 1 IOS/FOS -->
+  <div class="advanced-fields" id="advLeg1">
+    <div class="form-row">
+      <div class="form-group"><label>IOS (Outer Switch Out)</label><button class="time-btn adv-btn" id="leg1IosBtn" onclick="openPicker('leg1ios')">Tap to set</button></div>
+      <div class="form-group"><label>FOS (Outer Switch In)</label><button class="time-btn adv-btn" id="leg1FosBtn" onclick="openPicker('leg1fos')">Tap to set</button></div>
+    </div>
+    <div class="adv-duration-row">
+      <span class="adv-chip" id="leg1TermOut">🏭 Terminal out: —</span>
+      <span class="adv-chip" id="leg1Line">🛤 Line: —</span>
+      <span class="adv-chip" id="leg1TermIn">🏭 Terminal in: —</span>
+    </div>
+  </div>
+
+  <div class="inline-duration" id="inlineLeg1">
+    <span class="inline-duration-label">Leg 1 on duty</span>
+    <span class="inline-duration-value" id="inlineLeg1Val">—</span>
+  </div>
+
+  <div class="bunkhouse-strip" id="bunkhouseStrip">
+    <span>🛏</span>
+    <span class="bunkhouse-label">Bunkhouse</span>
+    <span class="bunkhouse-value" id="inlineBunkVal">—</span>
+  </div>
+
   <div class="leg-label">Leg 2 — Return</div>
   <div class="form-row" style="grid-template-columns:3fr 2fr;">
     <div class="form-group"><label>Date</label><input type="date" id="retDate" onchange="updatePreview()"></div>
@@ -218,6 +271,28 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     <div class="form-group"><label>On Duty</label><button class="time-btn" id="depDestBtn" onclick="openPicker('depDest')">Tap to set</button></div>
     <div class="form-group"><label>Off Duty</label><button class="time-btn" id="retTimeBtn" onclick="openPicker('ret')">Tap to set</button></div>
   </div>
+
+  <!-- Advanced: Leg 2 IOS/FOS -->
+  <div class="advanced-fields" id="advLeg2">
+    <div class="form-row">
+      <div class="form-group"><label>IOS (Outer Switch Out)</label><button class="time-btn adv-btn" id="leg2IosBtn" onclick="openPicker('leg2ios')">Tap to set</button></div>
+      <div class="form-group"><label>FOS (Outer Switch In)</label><button class="time-btn adv-btn" id="leg2FosBtn" onclick="openPicker('leg2fos')">Tap to set</button></div>
+    </div>
+    <div class="adv-duration-row">
+      <span class="adv-chip" id="leg2TermOut">🏭 Terminal out: —</span>
+      <span class="adv-chip" id="leg2Line">🛤 Line: —</span>
+      <span class="adv-chip" id="leg2TermIn">🏭 Terminal in: —</span>
+    </div>
+  </div>
+
+  <div class="inline-duration" id="inlineLeg2">
+    <span class="inline-duration-label">Leg 2 on duty</span>
+    <span class="inline-duration-value" id="inlineLeg2Val">—</span>
+  </div>
+
+  <!-- Coworkers -->
+  <div class="section-title" style="margin-top:14px;">Crew <span style="font-size:11px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
+  <div id="coworkerSlots" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
 
   <div class="form-group" style="margin-bottom:10px;margin-top:6px;">
     <label>Notes</label>
@@ -380,6 +455,10 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
 
   <button class="btn-save" onclick="saveSettings()">💾 Save Settings</button>
 
+  <div class="section-title" style="margin-top:24px;">Crew Members</div>
+  <div style="color:var(--muted);font-size:12px;margin-bottom:12px;">Names saved here appear in the crew dropdown on the Log tab.</div>
+  <div id="coworkerManagerList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+
   <div class="section-title" style="margin-top:24px;">Destinations</div>
   <div style="color:var(--muted);font-size:12px;margin-bottom:12px;">Destinations from your home terminal. One-way miles used for Year Wrapped totals.</div>
 
@@ -490,8 +569,7 @@ const MINS  = [0,5,10,15,20,25,30,35,40,45,50,55];
 const DAYS  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS= ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-const DEFAULT_SETTINGS = { rate:23, maxMeals:3, deduct:50, homeTerminal:'', year:new Date().getFullYear() };
-
+const DEFAULT_SETTINGS = { rate:23, maxMeals:3, deduct:50, homeTerminal:'', year:new Date().getFullYear(), advancedMode:false, defaultRole:'engineer' };
 let cfg         = { ...DEFAULT_SETTINGS };
 let activeYear  = 2025;
 let trips       = [];
@@ -514,6 +592,13 @@ function loadRoutes() {
 }
 function saveRoutes(routes) { localStorage.setItem(routesKey, JSON.stringify(routes)); }
 let routes = loadRoutes();
+
+const coworkersKey = 'cn_coworkers';
+function loadCoworkers() {
+  try { const s = localStorage.getItem(coworkersKey); return s ? JSON.parse(s) : []; } catch(e) { return []; }
+}
+function saveCoworkers(cw) { localStorage.setItem(coworkersKey, JSON.stringify(cw)); }
+let coworkers = loadCoworkers();
 
 function loadCfg() {
   try { const s = localStorage.getItem(cfgKey); if (s) cfg = { ...DEFAULT_SETTINGS, ...JSON.parse(s) }; } catch(e) {}
@@ -541,6 +626,7 @@ function getAllYears() {
 window.addEventListener('DOMContentLoaded', () => {
   loadCfg();
   routes = loadRoutes();
+  coworkers = loadCoworkers();
   activeYear = cfg.year || new Date().getFullYear();
   trips = loadTripsForYear(activeYear);
 
@@ -549,8 +635,13 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('retDate').value = today;
 
   applySettings();
+  applyAdvancedMode();
+  setRole(cfg.defaultRole || 'engineer');
+  setRole(cfg.defaultRole || 'engineer');
   renderRouteDropdown();
   renderRouteManager();
+  renderCoworkerManager();
+  renderCoworkerDropdowns();
   renderTrips();
 
   // Show onboarding if no home terminal set
@@ -589,28 +680,158 @@ function switchTab(name) {
 // ══════════════════════════════════════════════════════════════════
 function openPicker(target) {
   pickerTarget = target;
-  const btnId = { dep:'depTimeBtn', ret:'retTimeBtn', arrDest:'arrDestBtn', depDest:'depDestBtn' }[target];
-  const existing = document.getElementById(btnId).dataset.val;
+  const btnMap = {
+    dep:'depTimeBtn', ret:'retTimeBtn', arrDest:'arrDestBtn', depDest:'depDestBtn',
+    leg1ios:'leg1IosBtn', leg1fos:'leg1FosBtn', leg2ios:'leg2IosBtn', leg2fos:'leg2FosBtn'
+  };
+  const btnId = btnMap[target];
+  const existing = btnId ? document.getElementById(btnId).dataset.val : '';
   const [eh, em] = existing ? existing.split(':').map(Number) : [8, 0];
 
-  const titles = { dep:'Leg 1 — On Duty', arrDest:'Leg 1 — Off Duty', depDest:'Leg 2 — On Duty', ret:'Leg 2 — Off Duty' };
+  const titles = {
+    dep:'Leg 1 — On Duty', arrDest:'Leg 1 — Off Duty',
+    depDest:'Leg 2 — On Duty', ret:'Leg 2 — Off Duty',
+    leg1ios:'Leg 1 — IOS (Outer Switch Out)', leg1fos:'Leg 1 — FOS (Outer Switch In)',
+    leg2ios:'Leg 2 — IOS (Outer Switch Out)', leg2fos:'Leg 2 — FOS (Outer Switch In)'
+  };
   document.getElementById('pickerTitle').textContent = titles[target] || 'Set Time';
-
   buildDrum('drumH', HOURS.map(h => String(h).padStart(2,'0')), eh);
   buildDrum('drumM', MINS.map(m => String(m).padStart(2,'0')), MINS.findIndex(m => m >= em) || 0);
   document.getElementById('pickerOverlay').classList.add('open');
 }
 
-function openGridTimePicker(row, field) {
-  gridPickerTarget = { row, field };
-  const existing = bulkData[row][field];
-  const [eh, em] = existing ? existing.split(':').map(Number) : [8, 0];
-  pickerTarget = '__grid__';
-  const labels = { depTime:'Departure Time', retTime:'Return Time' };
-  document.getElementById('pickerTitle').textContent = labels[field] || 'Set Time';
-  buildDrum('drumH', HOURS.map(h => String(h).padStart(2,'0')), eh);
-  buildDrum('drumM', MINS.map(m => String(m).padStart(2,'0')), MINS.findIndex(m => m >= em) || 0);
-  document.getElementById('pickerOverlay').classList.add('open');
+function confirmPicker() {
+  const hIdx = getSelectedIdx('drumH');
+  const mIdx = getSelectedIdx('drumM');
+  const h = HOURS[hIdx];
+  const m = MINS[mIdx];
+  const timeStr = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+
+  const btnMap = {
+    dep:'depTimeBtn', ret:'retTimeBtn', arrDest:'arrDestBtn', depDest:'depDestBtn',
+    leg1ios:'leg1IosBtn', leg1fos:'leg1FosBtn', leg2ios:'leg2IosBtn', leg2fos:'leg2FosBtn'
+  };
+  const btn = document.getElementById(btnMap[pickerTarget]);
+  if (btn) { btn.textContent = timeStr; btn.dataset.val = timeStr; btn.classList.add('set'); }
+  closePicker();
+  updatePreview();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ADVANCED MODE
+// ══════════════════════════════════════════════════════════════════
+function toggleAdvancedMode() {
+  cfg.advancedMode = !cfg.advancedMode;
+  saveCfg();
+  applyAdvancedMode();
+}
+
+function applyAdvancedMode() {
+  const on = cfg.advancedMode;
+  document.getElementById('advancedToggle').style.background = on ? 'var(--red)' : 'var(--track)';
+  document.getElementById('advancedThumb').style.transform = on ? 'translateX(18px)' : 'translateX(0)';
+  document.querySelectorAll('.advanced-fields').forEach(el => {
+    el.classList.toggle('visible', on);
+  });
+}
+
+let currentRole = cfg.defaultRole || 'engineer';
+function setRole(role) {
+  currentRole = role;
+  cfg.defaultRole = role;
+  saveCfg();
+  document.getElementById('roleEng').style.background = role === 'engineer' ? 'var(--red)' : 'transparent';
+  document.getElementById('roleEng').style.color = role === 'engineer' ? '#fff' : 'var(--muted)';
+  document.getElementById('roleCon').style.background = role === 'conductor' ? 'var(--red)' : 'transparent';
+  document.getElementById('roleCon').style.color = role === 'conductor' ? '#fff' : 'var(--muted)';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// COWORKERS
+// ══════════════════════════════════════════════════════════════════
+let activeCoworkerSlots = 1;
+
+function renderCoworkerDropdowns() {
+  const container = document.getElementById('coworkerSlots');
+  if (!container) return;
+  container.innerHTML = '';
+  for (let i = 0; i < activeCoworkerSlots; i++) {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:8px;align-items:center;';
+    const sel = document.createElement('select');
+    sel.id = 'coworker' + i;
+    sel.style.cssText = 'flex:1;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:11px 12px;border-radius:10px;font-size:16px;font-family:Barlow,sans-serif;';
+    sel.innerHTML = '<option value="">— Select crew member —</option>' +
+      coworkers.map(cw => `<option value="${cw}">${cw}</option>`).join('');
+    row.appendChild(sel);
+    // Add slot button on last slot if < 3
+    if (i === activeCoworkerSlots - 1 && i < 2) {
+      const addBtn = document.createElement('button');
+      addBtn.textContent = '＋';
+      addBtn.style.cssText = 'background:var(--track);border:none;color:var(--gold);width:40px;height:44px;border-radius:10px;font-size:18px;cursor:pointer;flex-shrink:0;';
+      addBtn.onclick = () => { activeCoworkerSlots++; renderCoworkerDropdowns(); };
+      row.appendChild(addBtn);
+    }
+    container.appendChild(row);
+  }
+  // Add new coworker input
+  const addRow = document.createElement('div');
+  addRow.style.cssText = 'display:flex;gap:8px;margin-top:4px;';
+  addRow.innerHTML = `
+    <input type="text" id="newCoworkerInput" placeholder="Add new crew member..." 
+      style="flex:1;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:11px 12px;border-radius:10px;font-size:16px;">
+    <button onclick="addCoworker()" style="background:var(--track);border:none;color:var(--gold);padding:11px 14px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">Save</button>
+  `;
+  container.appendChild(addRow);
+}
+
+function addCoworker() {
+  const inp = document.getElementById('newCoworkerInput');
+  const name = inp.value.trim();
+  if (!name) return;
+  if (!coworkers.includes(name)) {
+    coworkers.push(name);
+    saveCoworkers(coworkers);
+    renderCoworkerManager();
+  }
+  inp.value = '';
+  renderCoworkerDropdowns();
+  // Auto-select the new name in first empty slot
+  for (let i = 0; i < activeCoworkerSlots; i++) {
+    const sel = document.getElementById('coworker' + i);
+    if (sel && !sel.value) { sel.value = name; break; }
+  }
+}
+
+function getSelectedCoworkers() {
+  const cws = [];
+  for (let i = 0; i < activeCoworkerSlots; i++) {
+    const sel = document.getElementById('coworker' + i);
+    if (sel && sel.value) cws.push(sel.value);
+  }
+  return cws;
+}
+
+function renderCoworkerManager() {
+  const el = document.getElementById('coworkerManagerList');
+  if (!el) return;
+  if (!coworkers.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0;">No crew members saved yet.</div>';
+    return;
+  }
+  el.innerHTML = coworkers.map((cw, i) => `
+    <div style="display:flex;align-items:center;gap:10px;background:var(--steel);border-radius:10px;padding:12px 14px;">
+      <span style="flex:1;color:var(--light);font-size:14px;font-weight:600;">${cw}</span>
+      <button onclick="deleteCoworker(${i})" style="background:rgba(227,24,55,0.15);border:1px solid rgba(227,24,55,0.3);color:var(--red);padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;">✕</button>
+    </div>
+  `).join('');
+}
+
+function deleteCoworker(i) {
+  coworkers.splice(i, 1);
+  saveCoworkers(coworkers);
+  renderCoworkerManager();
+  renderCoworkerDropdowns();
 }
 
 function buildDrum(id, items, selectedIdx) {
@@ -627,23 +848,6 @@ function getSelectedIdx(drumId) {
   return Math.max(0, Math.min(Math.round(drum.scrollTop / 40), items.length - 1));
 }
 
-function confirmPicker() {
-  const hIdx = getSelectedIdx('drumH');
-  const mIdx = getSelectedIdx('drumM');
-  const h = HOURS[hIdx];
-  const m = MINS[mIdx];
-  const timeStr = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-
-  const btnMap = { dep:'depTimeBtn', ret:'retTimeBtn', arrDest:'arrDestBtn', depDest:'depDestBtn' };
-  const btn = document.getElementById(btnMap[pickerTarget]);
-  if (btn) {
-    btn.textContent = timeStr;
-    btn.dataset.val = timeStr;
-    btn.classList.add('set');
-  }
-  closePicker();
-  updatePreview();
-}
 
 function closePicker() { document.getElementById('pickerOverlay').classList.remove('open'); }
 function overlayClick(e) { if (e.target === document.getElementById('pickerOverlay')) closePicker(); }
@@ -712,6 +916,12 @@ function updatePreview() {
   const retDate = document.getElementById('retDate').value;
   const leg2On  = document.getElementById('depDestBtn').dataset.val;
   const leg2Off = document.getElementById('retTimeBtn').dataset.val;
+  const leg1Ios = document.getElementById('leg1IosBtn').dataset.val;
+  const leg1Fos = document.getElementById('leg1FosBtn').dataset.val;
+  const leg2Ios = document.getElementById('leg2IosBtn').dataset.val;
+  const leg2Fos = document.getElementById('leg2FosBtn').dataset.val;
+
+  const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent = val; };
 
   if (!depDate || !leg1On || !retDate || !leg2Off) return;
 
@@ -724,32 +934,58 @@ function updatePreview() {
   const gross  = meals * cfg.rate;
   const deduct = gross * (cfg.deduct / 100);
 
-  document.getElementById('prevHours').textContent  = hours.toFixed(1) + 'h';
-  document.getElementById('prevMeals').textContent  = meals;
-  document.getElementById('prevDeduct').textContent = '$' + deduct.toFixed(2);
+  set('prevHours',  hours.toFixed(1) + 'h');
+  set('prevMeals',  meals);
+  set('prevDeduct', '$' + deduct.toFixed(2));
 
-  // Leg 1 on duty duration
+  // Leg 1
   if (leg1Off) {
     let l1off = new Date(depDate + 'T' + leg1Off);
-    if (l1off <= dep) l1off = new Date(l1off.getTime() + 86400000); // midnight cross
+    if (l1off <= dep) l1off = new Date(l1off.getTime() + 86400000);
     const l1h = (l1off - dep) / 3600000;
-    document.getElementById('prevLeg1').textContent = l1h.toFixed(1) + 'h';
+    set('prevLeg1', l1h.toFixed(1) + 'h');
+    set('inlineLeg1Val', l1h.toFixed(1) + 'h');
 
-    // Bunkhouse = Leg 1 off → Leg 2 on
+    // IOS/FOS chips for leg 1
+    if (leg1Ios && leg1Fos) {
+      const l1ios = new Date(depDate + 'T' + leg1Ios);
+      const l1fos = new Date(depDate + 'T' + leg1Fos);
+      set('leg1TermOut', '🏭 Terminal out: ' + ((l1ios - dep)/3600000).toFixed(1) + 'h');
+      set('leg1Line',    '🛤 Line: '          + ((l1fos - l1ios)/3600000).toFixed(1) + 'h');
+      set('leg1TermIn',  '🏭 Terminal in: '  + ((l1off - l1fos)/3600000).toFixed(1) + 'h');
+    }
+
+    // Bunkhouse
     if (leg2On) {
       const l2on = new Date(retDate + 'T' + leg2On);
       const bunk = (l2on - l1off) / 3600000;
-      document.getElementById('prevBunk').textContent = bunk > 0 ? bunk.toFixed(1) + 'h' : '—';
-      // Leg 2 on duty
+      const bunkStr = bunk > 0 ? bunk.toFixed(1) + 'h' : '—';
+      set('prevBunk', bunkStr);
+      set('inlineBunkVal', bunkStr);
+
+      // Leg 2
       const l2h = (ret - l2on) / 3600000;
-      const el2 = document.getElementById('prevLeg2');
-      if (el2) el2.textContent = l2h > 0 ? l2h.toFixed(1) + 'h' : '—';
+      const l2Str = l2h > 0 ? l2h.toFixed(1) + 'h' : '—';
+      set('prevLeg2', l2Str);
+      set('inlineLeg2Val', l2Str);
+
+      // IOS/FOS chips for leg 2
+      if (leg2Ios && leg2Fos) {
+        const l2ios = new Date(retDate + 'T' + leg2Ios);
+        const l2fos = new Date(retDate + 'T' + leg2Fos);
+        set('leg2TermOut', '🏭 Terminal out: ' + ((l2ios - l2on)/3600000).toFixed(1) + 'h');
+        set('leg2Line',    '🛤 Line: '          + ((l2fos - l2ios)/3600000).toFixed(1) + 'h');
+        set('leg2TermIn',  '🏭 Terminal in: '  + ((ret - l2fos)/3600000).toFixed(1) + 'h');
+      }
     } else {
-      document.getElementById('prevBunk').textContent = '—';
+      set('inlineBunkVal', '—');
+      set('inlineLeg2Val', '—');
     }
   } else {
-    document.getElementById('prevLeg1').textContent = '—';
-    document.getElementById('prevBunk').textContent = '—';
+    set('prevLeg1', '—');
+    set('prevBunk', '—');
+    set('inlineLeg1Val', '—');
+    set('inlineBunkVal', '—');
   }
 }
 
@@ -805,6 +1041,36 @@ function saveTrip() {
   const routeSel = document.getElementById('routeSelect');
   const selRoute = routes.find(r => r.id === routeSel.value) || routes[0] || {};
 
+  // IOS/FOS times (advanced mode)
+  const leg1Ios = document.getElementById('leg1IosBtn').dataset.val || '';
+  const leg1Fos = document.getElementById('leg1FosBtn').dataset.val || '';
+  const leg2Ios = document.getElementById('leg2IosBtn').dataset.val || '';
+  const leg2Fos = document.getElementById('leg2FosBtn').dataset.val || '';
+
+  // Calculate terminal/line times for leg 1
+  let leg1TermOutH = 0, leg1LineH = 0, leg1TermInH = 0;
+  if (leg1Off && leg1Ios && leg1Fos) {
+    let l1off = new Date(depDate + 'T' + leg1Off);
+    if (l1off <= dep) l1off.setDate(l1off.getDate() + 1);
+    const l1ios = new Date(depDate + 'T' + leg1Ios);
+    const l1fos = new Date(depDate + 'T' + leg1Fos);
+    leg1TermOutH = Math.max(0, (l1ios - dep) / 3600000);
+    leg1LineH    = Math.max(0, (l1fos - l1ios) / 3600000);
+    leg1TermInH  = Math.max(0, (l1off - l1fos) / 3600000);
+  }
+
+  // Calculate terminal/line times for leg 2
+  let leg2TermOutH = 0, leg2LineH = 0, leg2TermInH = 0;
+  if (leg2On && leg2Ios && leg2Fos) {
+    const l2on  = new Date(retDate + 'T' + leg2On);
+    const l2ios = new Date(retDate + 'T' + leg2Ios);
+    const l2fos = new Date(retDate + 'T' + leg2Fos);
+    const l2off = new Date(retDate + 'T' + leg2Off);
+    leg2TermOutH = Math.max(0, (l2ios - l2on) / 3600000);
+    leg2LineH    = Math.max(0, (l2fos - l2ios) / 3600000);
+    leg2TermInH  = Math.max(0, (l2off - l2fos) / 3600000);
+  }
+
   const trip = {
     id: Date.now() + Math.random(),
     depDate, depTime: leg1On,
@@ -819,6 +1085,11 @@ function saveTrip() {
     trainOut:  document.getElementById('trainOut').value.trim().toUpperCase(),
     trainBack: document.getElementById('trainBack').value.trim().toUpperCase(),
     series: getTrainSeries(document.getElementById('trainOut').value),
+    role: currentRole,
+    coworkers: getSelectedCoworkers(),
+    leg1Ios, leg1Fos, leg2Ios, leg2Fos,
+    leg1TermOutH, leg1LineH, leg1TermInH,
+    leg2TermOutH, leg2LineH, leg2TermInH,
     hours, meals, gross, deduct,
     rate: cfg.rate, deductPct: cfg.deduct,
     leg1h, leg2h, bunkhouseH, onDutyH
@@ -842,15 +1113,24 @@ function resetForm() {
   document.getElementById('trainOut').value  = '';
   document.getElementById('trainBack').value = '';
   document.getElementById('notes').value     = '';
-  ['depTimeBtn','arrDestBtn','depDestBtn','retTimeBtn'].forEach(id => {
+  ['depTimeBtn','arrDestBtn','depDestBtn','retTimeBtn',
+   'leg1IosBtn','leg1FosBtn','leg2IosBtn','leg2FosBtn'].forEach(id => {
     const btn = document.getElementById(id);
+    if (!btn) return;
     btn.textContent = 'Tap to set';
     btn.dataset.val = '';
     btn.classList.remove('set');
   });
-  ['prevLeg1','prevBunk','prevLeg2','prevHours','prevMeals','prevDeduct'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.textContent = '—';
+  ['prevLeg1','prevBunk','prevLeg2','prevHours','prevMeals','prevDeduct',
+   'inlineLeg1Val','inlineBunkVal','inlineLeg2Val',
+   'leg1TermOut','leg1Line','leg1TermIn','leg2TermOut','leg2Line','leg2TermIn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = id.includes('Term') || id.includes('Line') ? el.textContent.split(':')[0] + ': —' : '—';
   });
+  activeCoworkerSlots = 1;
+  currentRole = cfg.defaultRole || 'engineer';
+  setRole(currentRole);
+  renderCoworkerDropdowns();
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1343,15 +1623,11 @@ function drawWrapped() {
     ctx.fillText(s.label, x+boxW/2, y+92);
   });
 
-  // Footer
-  const daysAway = Math.round(th/24);
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
-  ctx.font = '22px sans-serif';
+  // Footer — clean, no fluff
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.font = '16px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(`You spent ${daysAway} day${daysAway!==1?'s':''} away from home in ${activeYear}.`, W/2, H-100);
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.font = '20px sans-serif';
-  ctx.fillText("That's dedication. 🚂", W/2, H-65);
+  ctx.fillText(`Trip Track · ${activeYear} · CRA TL2`, W/2, H - 60);
 }
 
 function saveWrapped() {
