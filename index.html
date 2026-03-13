@@ -222,10 +222,15 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     </div>
   </div>
 
-  <div class="form-group" style="margin-bottom:12px;">
-    <label>Destination</label>
-    <select id="routeSelect" style="width:100%;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:12px 14px;border-radius:10px;font-size:16px;font-family:'Barlow',sans-serif;">
-    </select>
+  <div style="display:flex;gap:10px;margin-bottom:12px;">
+    <div class="form-group" style="flex:2;">
+      <label>Destination</label>
+      <select id="routeSelect" style="width:100%;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:12px 14px;border-radius:10px;font-size:16px;font-family:'Barlow',sans-serif;"></select>
+    </div>
+    <div class="form-group" style="flex:1;">
+      <label>Trip Type</label>
+      <select id="tripTypeSelect" onchange="saveCfg()" style="width:100%;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:12px 10px;border-radius:10px;font-size:15px;font-family:'Barlow',sans-serif;"></select>
+    </div>
   </div>
 
   <div class="leg-label">Leg 1 — Departure</div>
@@ -305,10 +310,48 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     <input type="text" id="notes" placeholder="Optional">
   </div>
 
+  <!-- Turn leg -->
+  <div id="turnLegSection" style="display:none;">
+    <div class="bunkhouse-strip" style="margin-top:8px;">
+      <span>🛏</span>
+      <span class="bunkhouse-label">Bunkhouse 2</span>
+      <span class="bunkhouse-value" id="inlineBunk2Val">—</span>
+    </div>
+    <div class="leg-label">Leg 3 — Return</div>
+    <div class="form-row" style="grid-template-columns:3fr 2fr;">
+      <div class="form-group"><label>Date</label><input type="date" id="leg3Date" onchange="updatePreview()"></div>
+      <div class="form-group"><label>Train</label><input type="text" id="trainLeg3" placeholder="Q199" autocomplete="off" autocapitalize="characters"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>On Duty</label><button class="time-btn" id="leg3OnBtn" onclick="openPicker('leg3on')">Tap to set</button></div>
+      <div class="form-group"><label>Off Duty</label><button class="time-btn" id="leg3OffBtn" onclick="openPicker('leg3off')">Tap to set</button></div>
+    </div>
+    <div class="advanced-fields" id="advLeg3">
+      <div class="form-row">
+        <div class="form-group"><label>IOS (Initial Outer Switch)</label><button class="time-btn adv-btn" id="leg3IosBtn" onclick="openPicker('leg3ios')">Tap to set</button></div>
+        <div class="form-group"><label>FOS (Final Outer Switch)</label><button class="time-btn adv-btn" id="leg3FosBtn" onclick="openPicker('leg3fos')">Tap to set</button></div>
+      </div>
+      <div class="adv-duration-row">
+        <span class="adv-chip" id="leg3TermOut">🏭 Terminal out: —</span>
+        <span class="adv-chip" id="leg3Line">🛤 Line: —</span>
+        <span class="adv-chip" id="leg3TermIn">🏭 Terminal in: —</span>
+      </div>
+    </div>
+    <div class="inline-duration">
+      <span class="inline-duration-label">Leg 3 on duty</span>
+      <span class="inline-duration-value" id="inlineLeg3Val">—</span>
+    </div>
+    <button onclick="removeTurnLeg()" style="width:100%;margin:8px 0;padding:10px;background:none;border:1px solid rgba(227,24,55,0.3);border-radius:10px;color:var(--red);font-size:13px;font-weight:600;cursor:pointer;">✕ Remove Turn Leg</button>
+  </div>
+
+  <button id="addTurnBtn" onclick="addTurnLeg()" style="width:100%;margin:8px 0 4px;padding:12px;background:none;border:1px dashed var(--track);border-radius:10px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:0.5px;cursor:pointer;">＋ ADD TURN LEG</button>
+
   <div class="duty-preview">
     <div class="duty-row"><span class="duty-label">Leg 1 on duty</span><span class="duty-value" id="prevLeg1">—</span></div>
     <div class="duty-row"><span class="duty-label">Bunkhouse (auto)</span><span class="duty-value" id="prevBunk">—</span></div>
     <div class="duty-row"><span class="duty-label">Leg 2 on duty</span><span class="duty-value" id="prevLeg2">—</span></div>
+    <div class="duty-row" id="prevBunk2Row" style="display:none;"><span class="duty-label">Bunkhouse 2 (auto)</span><span class="duty-value" id="prevBunk2">—</span></div>
+    <div class="duty-row" id="prevLeg3Row" style="display:none;"><span class="duty-label">Leg 3 on duty</span><span class="duty-value" id="prevLeg3">—</span></div>
     <div class="duty-row"><span class="duty-label">Total hours away</span><span class="duty-value" id="prevHours">—</span></div>
     <div class="duty-row"><span class="duty-label">Meals claimable</span><span class="duty-value gold" id="prevMeals">—</span></div>
     <div class="duty-row"><span class="duty-label">Deductible (Line 22900)</span><span class="duty-value green" id="prevDeduct">—</span></div>
@@ -461,6 +504,14 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
 
   <button class="btn-save" onclick="saveSettings()">💾 Save Settings</button>
 
+  <div class="section-title" style="margin-top:24px;">Trip Types</div>
+  <div style="color:var(--muted);font-size:12px;margin-bottom:12px;">Manage trip types. Default types can't be deleted.</div>
+  <div id="tripTypeManagerList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+  <div style="display:flex;gap:8px;margin-bottom:24px;">
+    <input type="text" id="newTripTypeInput" placeholder="Add trip type..." style="flex:1;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:10px 12px;border-radius:10px;font-size:16px;outline:none;">
+    <button onclick="addTripType()" style="background:var(--red);border:none;color:#fff;padding:10px 18px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;">＋ Add</button>
+  </div>
+
   <div class="section-title" style="margin-top:24px;">Crew Members</div>
   <div style="color:var(--muted);font-size:12px;margin-bottom:12px;">Names saved here appear in the crew dropdown on the Log tab.</div>
   <div id="coworkerManagerList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
@@ -610,6 +661,15 @@ function loadCoworkers() {
 function saveCoworkers(cw) { localStorage.setItem(coworkersKey, JSON.stringify(cw)); }
 let coworkers = loadCoworkers();
 
+const tripTypesKey = 'cn_trip_types';
+const DEFAULT_TRIP_TYPES = ['Thru Freight', 'Combo', 'Deadhead', 'Yard', 'Turn'];
+function loadTripTypes() {
+  try { const s = localStorage.getItem(tripTypesKey); return s ? JSON.parse(s) : [...DEFAULT_TRIP_TYPES]; } catch(e) { return [...DEFAULT_TRIP_TYPES]; }
+}
+function saveTripTypes(tt) { localStorage.setItem(tripTypesKey, JSON.stringify(tt)); }
+let tripTypes = loadTripTypes();
+let hasTurnLeg = false;
+
 function loadCfg() {
   try { const s = localStorage.getItem(cfgKey); if (s) cfg = { ...DEFAULT_SETTINGS, ...JSON.parse(s) }; } catch(e) {}
 }
@@ -647,11 +707,12 @@ window.addEventListener('DOMContentLoaded', () => {
   applySettings();
   applyAdvancedMode();
   setRole(cfg.defaultRole || 'engineer');
-  setRole(cfg.defaultRole || 'engineer');
   renderRouteDropdown();
   renderRouteManager();
   renderCoworkerManager();
   renderCoworkerDropdowns();
+  renderTripTypeDropdown();
+  renderTripTypeManager();
   renderTrips();
 
   // Show onboarding if no home terminal set
@@ -692,7 +753,8 @@ function openPicker(target) {
   pickerTarget = target;
   const btnMap = {
     dep:'depTimeBtn', ret:'retTimeBtn', arrDest:'arrDestBtn', depDest:'depDestBtn',
-    leg1ios:'leg1IosBtn', leg1fos:'leg1FosBtn', leg2ios:'leg2IosBtn', leg2fos:'leg2FosBtn'
+    leg1ios:'leg1IosBtn', leg1fos:'leg1FosBtn', leg2ios:'leg2IosBtn', leg2fos:'leg2FosBtn',
+    leg3on:'leg3OnBtn', leg3off:'leg3OffBtn', leg3ios:'leg3IosBtn', leg3fos:'leg3FosBtn'
   };
   const btnId = btnMap[target];
   const existing = btnId ? document.getElementById(btnId).dataset.val : '';
@@ -702,7 +764,9 @@ function openPicker(target) {
     dep:'Leg 1 — On Duty', arrDest:'Leg 1 — Off Duty',
     depDest:'Leg 2 — On Duty', ret:'Leg 2 — Off Duty',
     leg1ios:'Leg 1 — IOS (Initial Outer Switch)', leg1fos:'Leg 1 — FOS (Final Outer Switch)',
-    leg2ios:'Leg 2 — IOS (Initial Outer Switch)', leg2fos:'Leg 2 — FOS (Final Outer Switch)'
+    leg2ios:'Leg 2 — IOS (Initial Outer Switch)', leg2fos:'Leg 2 — FOS (Final Outer Switch)',
+    leg3on:'Leg 3 — On Duty', leg3off:'Leg 3 — Off Duty',
+    leg3ios:'Leg 3 — IOS (Initial Outer Switch)', leg3fos:'Leg 3 — FOS (Final Outer Switch)'
   };
   document.getElementById('pickerTitle').textContent = titles[target] || 'Set Time';
   buildDrum('drumH', HOURS.map(h => String(h).padStart(2,'0')), eh);
@@ -719,7 +783,8 @@ function confirmPicker() {
 
   const btnMap = {
     dep:'depTimeBtn', ret:'retTimeBtn', arrDest:'arrDestBtn', depDest:'depDestBtn',
-    leg1ios:'leg1IosBtn', leg1fos:'leg1FosBtn', leg2ios:'leg2IosBtn', leg2fos:'leg2FosBtn'
+    leg1ios:'leg1IosBtn', leg1fos:'leg1FosBtn', leg2ios:'leg2IosBtn', leg2fos:'leg2FosBtn',
+    leg3on:'leg3OnBtn', leg3off:'leg3OffBtn', leg3ios:'leg3IosBtn', leg3fos:'leg3FosBtn'
   };
   const btn = document.getElementById(btnMap[pickerTarget]);
   if (btn) { btn.textContent = timeStr; btn.dataset.val = timeStr; btn.classList.add('set'); }
@@ -728,8 +793,73 @@ function confirmPicker() {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// ADVANCED MODE
+// TRIP TYPES
 // ══════════════════════════════════════════════════════════════════
+function renderTripTypeDropdown() {
+  const sel = document.getElementById('tripTypeSelect');
+  if (!sel) return;
+  const last = cfg.lastTripType || tripTypes[0];
+  sel.innerHTML = tripTypes.map(t => `<option value="${t}" ${t===last?'selected':''}>${t}</option>`).join('');
+}
+
+function renderTripTypeManager() {
+  const el = document.getElementById('tripTypeManagerList');
+  if (!el) return;
+  el.innerHTML = tripTypes.map((t, i) => `
+    <div style="display:flex;align-items:center;gap:10px;background:var(--steel);border-radius:10px;padding:12px 14px;">
+      <span style="flex:1;color:var(--light);font-size:14px;font-weight:600;">${t}</span>
+      ${i < DEFAULT_TRIP_TYPES.length ? '<span style="color:var(--muted);font-size:11px;">default</span>' :
+      `<button onclick="deleteTripType(${i})" style="background:rgba(227,24,55,0.15);border:1px solid rgba(227,24,55,0.3);color:var(--red);padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;">✕</button>`}
+    </div>
+  `).join('');
+}
+
+function addTripType() {
+  const inp = document.getElementById('newTripTypeInput');
+  const name = inp.value.trim();
+  if (!name || tripTypes.includes(name)) return;
+  tripTypes.push(name);
+  saveTripTypes(tripTypes);
+  inp.value = '';
+  renderTripTypeDropdown();
+  renderTripTypeManager();
+}
+
+function deleteTripType(i) {
+  tripTypes.splice(i, 1);
+  saveTripTypes(tripTypes);
+  renderTripTypeDropdown();
+  renderTripTypeManager();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TURN LEG
+// ══════════════════════════════════════════════════════════════════
+function addTurnLeg() {
+  hasTurnLeg = true;
+  document.getElementById('turnLegSection').style.display = 'block';
+  document.getElementById('addTurnBtn').style.display = 'none';
+  document.getElementById('prevBunk2Row').style.display = 'flex';
+  document.getElementById('prevLeg3Row').style.display = 'flex';
+  // Apply advanced mode to leg3 fields
+  applyAdvancedMode();
+}
+
+function removeTurnLeg() {
+  hasTurnLeg = false;
+  document.getElementById('turnLegSection').style.display = 'none';
+  document.getElementById('addTurnBtn').style.display = 'block';
+  document.getElementById('prevBunk2Row').style.display = 'none';
+  document.getElementById('prevLeg3Row').style.display = 'none';
+  ['leg3OnBtn','leg3OffBtn','leg3IosBtn','leg3FosBtn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.textContent = 'Tap to set'; btn.dataset.val = ''; btn.classList.remove('set');
+  });
+  document.getElementById('trainLeg3').value = '';
+  document.getElementById('leg3Date').value = '';
+  updatePreview();
+}
 function toggleAdvancedMode() {
   cfg.advancedMode = !cfg.advancedMode;
   saveCfg();
@@ -1005,10 +1135,41 @@ function updatePreview() {
     }
   }
 
-  // Totals — needs all four main times
+  // Totals — needs all four main times, plus leg3 if present
   if (depDate && leg1On && retDate && leg2Off) {
-    const dep   = new Date(depDate + 'T' + leg1On);
-    const ret   = new Date(retDate + 'T' + leg2Off);
+    const dep = new Date(depDate + 'T' + leg1On);
+    let endTime, endDate;
+
+    if (hasTurnLeg) {
+      const leg3Date = document.getElementById('leg3Date').value;
+      const leg3Off  = document.getElementById('leg3OffBtn').dataset.val;
+      const leg3On   = document.getElementById('leg3OnBtn').dataset.val;
+
+      // Bunkhouse 2: Leg 2 off → Leg 3 on
+      if (leg3On && leg3Date) {
+        const l2off = new Date(retDate + 'T' + leg2Off);
+        const l3on  = new Date(leg3Date + 'T' + leg3On);
+        const bunk2 = (l3on - l2off) / 3600000;
+        set('prevBunk2',     bunk2 > 0 ? fmtHours(bunk2) : '—');
+        set('inlineBunk2Val', bunk2 > 0 ? fmtHours(bunk2) : '—');
+      }
+
+      // Leg 3 duration
+      if (leg3On && leg3Date && leg3Off) {
+        const l3on  = new Date(leg3Date + 'T' + leg3On);
+        const l3off = new Date(leg3Date + 'T' + leg3Off);
+        const l3h   = (l3off - l3on) / 3600000;
+        set('prevLeg3',      l3h > 0 ? fmtHours(l3h) : '—');
+        set('inlineLeg3Val', l3h > 0 ? fmtHours(l3h) : '—');
+        endTime = leg3Off; endDate = leg3Date;
+      } else {
+        endTime = leg2Off; endDate = retDate;
+      }
+    } else {
+      endTime = leg2Off; endDate = retDate;
+    }
+
+    const ret   = new Date(endDate + 'T' + endTime);
     const hours = (ret - dep) / 3600000;
     if (hours > 0) {
       const meals  = calcMeals(hours);
@@ -1064,8 +1225,48 @@ function saveTrip() {
     bunkhouseH = Math.max(0, (l2on - l1off) / 3600000);
   }
 
-  const onDutyH = leg1h + leg2h;
-  const meals   = calcMeals(hours);
+  // Trip type
+  const tripTypeSel = document.getElementById('tripTypeSelect');
+  const tripType = tripTypeSel ? tripTypeSel.value : 'Thru Freight';
+  cfg.lastTripType = tripType;
+  saveCfg();
+
+  // Leg 3 (turn)
+  let leg3Date='', leg3On='', leg3Off='', leg3h=0, bunkhouse2H=0, trainLeg3='';
+  let leg3Ios='', leg3Fos='', leg3TermOutH=0, leg3LineH=0, leg3TermInH=0;
+  if (hasTurnLeg) {
+    leg3Date  = document.getElementById('leg3Date').value;
+    leg3On    = document.getElementById('leg3OnBtn').dataset.val || '';
+    leg3Off   = document.getElementById('leg3OffBtn').dataset.val || '';
+    trainLeg3 = document.getElementById('trainLeg3').value.trim().toUpperCase();
+    leg3Ios   = document.getElementById('leg3IosBtn').dataset.val || '';
+    leg3Fos   = document.getElementById('leg3FosBtn').dataset.val || '';
+    if (leg3Date && leg3On && leg3Off) {
+      const l3on  = new Date(leg3Date + 'T' + leg3On);
+      const l3off = new Date(leg3Date + 'T' + leg3Off);
+      leg3h = Math.max(0, (l3off - l3on) / 3600000);
+      // Bunkhouse 2: Leg 2 off → Leg 3 on
+      const l2off2 = new Date(retDate + 'T' + leg2Off);
+      bunkhouse2H = Math.max(0, (l3on - l2off2) / 3600000);
+      // IOS/FOS leg 3
+      if (leg3Ios && leg3Fos) {
+        const l3ios = new Date(leg3Date + 'T' + leg3Ios);
+        const l3fos = new Date(leg3Date + 'T' + leg3Fos);
+        leg3TermOutH = Math.max(0, (l3ios - l3on) / 3600000);
+        leg3LineH    = Math.max(0, (l3fos - l3ios) / 3600000);
+        leg3TermInH  = Math.max(0, (l3off - l3fos) / 3600000);
+      }
+    }
+  }
+
+  // Recalc total hours including leg 3
+  const finalEnd = hasTurnLeg && leg3Date && leg3Off
+    ? new Date(leg3Date + 'T' + leg3Off)
+    : ret;
+  const totalHours = (finalEnd - dep) / 3600000;
+
+  const onDutyH = leg1h + leg2h + leg3h;
+  const meals   = calcMeals(totalHours);
   const gross   = meals * cfg.rate;
   const deduct  = gross * (cfg.deduct / 100);
   const tripYear = parseInt(depDate.split('-')[0]);
@@ -1118,11 +1319,15 @@ function saveTrip() {
     trainBack: document.getElementById('trainBack').value.trim().toUpperCase(),
     series: getTrainSeries(document.getElementById('trainOut').value),
     role: currentRole,
+    tripType,
     coworkers: getSelectedCoworkers(),
+    hasTurnLeg, leg3Date, leg3On, leg3Off, trainLeg3,
+    leg3Ios, leg3Fos, leg3TermOutH, leg3LineH, leg3TermInH,
+    leg3h, bunkhouse2H,
     leg1Ios, leg1Fos, leg2Ios, leg2Fos,
     leg1TermOutH, leg1LineH, leg1TermInH,
     leg2TermOutH, leg2LineH, leg2TermInH,
-    hours, meals, gross, deduct,
+    hours: totalHours, meals, gross, deduct,
     rate: cfg.rate, deductPct: cfg.deduct,
     leg1h, leg2h, bunkhouseH, onDutyH
   };
@@ -1146,23 +1351,24 @@ function resetForm() {
   document.getElementById('trainBack').value = '';
   document.getElementById('notes').value     = '';
   ['depTimeBtn','arrDestBtn','depDestBtn','retTimeBtn',
-   'leg1IosBtn','leg1FosBtn','leg2IosBtn','leg2FosBtn'].forEach(id => {
+   'leg1IosBtn','leg1FosBtn','leg2IosBtn','leg2FosBtn',
+   'leg3OnBtn','leg3OffBtn','leg3IosBtn','leg3FosBtn'].forEach(id => {
     const btn = document.getElementById(id);
     if (!btn) return;
-    btn.textContent = 'Tap to set';
-    btn.dataset.val = '';
-    btn.classList.remove('set');
+    btn.textContent = 'Tap to set'; btn.dataset.val = ''; btn.classList.remove('set');
   });
-  ['prevLeg1','prevBunk','prevLeg2','prevHours','prevMeals','prevDeduct',
-   'inlineLeg1Val','inlineBunkVal','inlineLeg2Val',
-   'leg1TermOut','leg1Line','leg1TermIn','leg2TermOut','leg2Line','leg2TermIn'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = id.includes('Term') || id.includes('Line') ? el.textContent.split(':')[0] + ': —' : '—';
+  ['prevLeg1','prevBunk','prevLeg2','prevBunk2','prevLeg3','prevHours','prevMeals','prevDeduct',
+   'inlineLeg1Val','inlineBunkVal','inlineLeg2Val','inlineBunk2Val','inlineLeg3Val'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = '—';
   });
+  // Reset turn leg
+  if (hasTurnLeg) removeTurnLeg();
+  hasTurnLeg = false;
   activeCoworkerSlots = 1;
   currentRole = cfg.defaultRole || 'engineer';
   setRole(currentRole);
   renderCoworkerDropdowns();
+  renderTripTypeDropdown();
 }
 
 // ══════════════════════════════════════════════════════════════════
