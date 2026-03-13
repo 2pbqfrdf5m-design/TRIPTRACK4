@@ -241,8 +241,8 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
   <!-- Advanced: Leg 1 IOS/FOS -->
   <div class="advanced-fields" id="advLeg1">
     <div class="form-row">
-      <div class="form-group"><label>IOS (Outer Switch Out)</label><button class="time-btn adv-btn" id="leg1IosBtn" onclick="openPicker('leg1ios')">Tap to set</button></div>
-      <div class="form-group"><label>FOS (Outer Switch In)</label><button class="time-btn adv-btn" id="leg1FosBtn" onclick="openPicker('leg1fos')">Tap to set</button></div>
+      <div class="form-group"><label>IOS (Initial Outer Switch)</label><button class="time-btn adv-btn" id="leg1IosBtn" onclick="openPicker('leg1ios')">Tap to set</button></div>
+      <div class="form-group"><label>FOS (Final Outer Switch)</label><button class="time-btn adv-btn" id="leg1FosBtn" onclick="openPicker('leg1fos')">Tap to set</button></div>
     </div>
     <div class="adv-duration-row">
       <span class="adv-chip" id="leg1TermOut">🏭 Terminal out: —</span>
@@ -275,14 +275,15 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
   <!-- Advanced: Leg 2 IOS/FOS -->
   <div class="advanced-fields" id="advLeg2">
     <div class="form-row">
-      <div class="form-group"><label>IOS (Outer Switch Out)</label><button class="time-btn adv-btn" id="leg2IosBtn" onclick="openPicker('leg2ios')">Tap to set</button></div>
-      <div class="form-group"><label>FOS (Outer Switch In)</label><button class="time-btn adv-btn" id="leg2FosBtn" onclick="openPicker('leg2fos')">Tap to set</button></div>
+      <div class="form-group"><label>IOS (Initial Outer Switch)</label><button class="time-btn adv-btn" id="leg2IosBtn" onclick="openPicker('leg2ios')">Tap to set</button></div>
+      <div class="form-group"><label>FOS (Final Outer Switch)</label><button class="time-btn adv-btn" id="leg2FosBtn" onclick="openPicker('leg2fos')">Tap to set</button></div>
     </div>
     <div class="adv-duration-row">
       <span class="adv-chip" id="leg2TermOut">🏭 Terminal out: —</span>
       <span class="adv-chip" id="leg2Line">🛤 Line: —</span>
       <span class="adv-chip" id="leg2TermIn">🏭 Terminal in: —</span>
     </div>
+  </div>
   </div>
 
   <div class="inline-duration" id="inlineLeg2">
@@ -691,8 +692,8 @@ function openPicker(target) {
   const titles = {
     dep:'Leg 1 — On Duty', arrDest:'Leg 1 — Off Duty',
     depDest:'Leg 2 — On Duty', ret:'Leg 2 — Off Duty',
-    leg1ios:'Leg 1 — IOS (Outer Switch Out)', leg1fos:'Leg 1 — FOS (Outer Switch In)',
-    leg2ios:'Leg 2 — IOS (Outer Switch Out)', leg2fos:'Leg 2 — FOS (Outer Switch In)'
+    leg1ios:'Leg 1 — IOS (Initial Outer Switch)', leg1fos:'Leg 1 — FOS (Final Outer Switch)',
+    leg2ios:'Leg 2 — IOS (Initial Outer Switch)', leg2fos:'Leg 2 — FOS (Final Outer Switch)'
   };
   document.getElementById('pickerTitle').textContent = titles[target] || 'Set Time';
   buildDrum('drumH', HOURS.map(h => String(h).padStart(2,'0')), eh);
@@ -921,71 +922,70 @@ function updatePreview() {
   const leg2Ios = document.getElementById('leg2IosBtn').dataset.val;
   const leg2Fos = document.getElementById('leg2FosBtn').dataset.val;
 
-  const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent = val; };
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
-  if (!depDate || !leg1On || !retDate || !leg2Off) return;
-
-  const dep   = new Date(depDate + 'T' + leg1On);
-  const ret   = new Date(retDate + 'T' + leg2Off);
-  const hours = (ret - dep) / 3600000;
-  if (hours <= 0) return;
-
-  const meals  = calcMeals(hours);
-  const gross  = meals * cfg.rate;
-  const deduct = gross * (cfg.deduct / 100);
-
-  set('prevHours',  hours.toFixed(1) + 'h');
-  set('prevMeals',  meals);
-  set('prevDeduct', '$' + deduct.toFixed(2));
-
-  // Leg 1
-  if (leg1Off) {
-    let l1off = new Date(depDate + 'T' + leg1Off);
+  // Leg 1 duration — needs depDate + leg1On + leg1Off
+  if (depDate && leg1On && leg1Off) {
+    const dep   = new Date(depDate + 'T' + leg1On);
+    let l1off   = new Date(depDate + 'T' + leg1Off);
     if (l1off <= dep) l1off = new Date(l1off.getTime() + 86400000);
     const l1h = (l1off - dep) / 3600000;
-    set('prevLeg1', l1h.toFixed(1) + 'h');
+    set('prevLeg1',      l1h.toFixed(1) + 'h');
     set('inlineLeg1Val', l1h.toFixed(1) + 'h');
 
     // IOS/FOS chips for leg 1
     if (leg1Ios && leg1Fos) {
-      const l1ios = new Date(depDate + 'T' + leg1Ios);
-      const l1fos = new Date(depDate + 'T' + leg1Fos);
-      set('leg1TermOut', '🏭 Terminal out: ' + ((l1ios - dep)/3600000).toFixed(1) + 'h');
-      set('leg1Line',    '🛤 Line: '          + ((l1fos - l1ios)/3600000).toFixed(1) + 'h');
-      set('leg1TermIn',  '🏭 Terminal in: '  + ((l1off - l1fos)/3600000).toFixed(1) + 'h');
+      const dep2   = new Date(depDate + 'T' + leg1On);
+      const l1ios  = new Date(depDate + 'T' + leg1Ios);
+      const l1fos  = new Date(depDate + 'T' + leg1Fos);
+      set('leg1TermOut', '🏭 Terminal out: ' + ((l1ios - dep2) / 3600000).toFixed(1) + 'h');
+      set('leg1Line',    '🛤 Line: '          + ((l1fos - l1ios) / 3600000).toFixed(1) + 'h');
+      set('leg1TermIn',  '🏭 Terminal in: '  + ((l1off - l1fos) / 3600000).toFixed(1) + 'h');
     }
+  }
 
-    // Bunkhouse
-    if (leg2On) {
-      const l2on = new Date(retDate + 'T' + leg2On);
-      const bunk = (l2on - l1off) / 3600000;
-      const bunkStr = bunk > 0 ? bunk.toFixed(1) + 'h' : '—';
-      set('prevBunk', bunkStr);
-      set('inlineBunkVal', bunkStr);
+  // Bunkhouse — needs leg1Off + leg2On
+  if (depDate && leg1On && leg1Off && retDate && leg2On) {
+    const dep  = new Date(depDate + 'T' + leg1On);
+    let l1off  = new Date(depDate + 'T' + leg1Off);
+    if (l1off <= dep) l1off = new Date(l1off.getTime() + 86400000);
+    const l2on = new Date(retDate + 'T' + leg2On);
+    const bunk = (l2on - l1off) / 3600000;
+    set('prevBunk',      bunk > 0 ? bunk.toFixed(1) + 'h' : '—');
+    set('inlineBunkVal', bunk > 0 ? bunk.toFixed(1) + 'h' : '—');
+  }
 
-      // Leg 2
-      const l2h = (ret - l2on) / 3600000;
-      const l2Str = l2h > 0 ? l2h.toFixed(1) + 'h' : '—';
-      set('prevLeg2', l2Str);
-      set('inlineLeg2Val', l2Str);
+  // Leg 2 duration — needs retDate + leg2On + leg2Off
+  if (retDate && leg2On && leg2Off) {
+    const l2on = new Date(retDate + 'T' + leg2On);
+    const ret  = new Date(retDate + 'T' + leg2Off);
+    const l2h  = (ret - l2on) / 3600000;
+    set('prevLeg2',      l2h > 0 ? l2h.toFixed(1) + 'h' : '—');
+    set('inlineLeg2Val', l2h > 0 ? l2h.toFixed(1) + 'h' : '—');
 
-      // IOS/FOS chips for leg 2
-      if (leg2Ios && leg2Fos) {
-        const l2ios = new Date(retDate + 'T' + leg2Ios);
-        const l2fos = new Date(retDate + 'T' + leg2Fos);
-        set('leg2TermOut', '🏭 Terminal out: ' + ((l2ios - l2on)/3600000).toFixed(1) + 'h');
-        set('leg2Line',    '🛤 Line: '          + ((l2fos - l2ios)/3600000).toFixed(1) + 'h');
-        set('leg2TermIn',  '🏭 Terminal in: '  + ((ret - l2fos)/3600000).toFixed(1) + 'h');
-      }
-    } else {
-      set('inlineBunkVal', '—');
-      set('inlineLeg2Val', '—');
+    // IOS/FOS chips for leg 2
+    if (leg2Ios && leg2Fos) {
+      const l2ios = new Date(retDate + 'T' + leg2Ios);
+      const l2fos = new Date(retDate + 'T' + leg2Fos);
+      set('leg2TermOut', '🏭 Terminal out: ' + ((l2ios - l2on) / 3600000).toFixed(1) + 'h');
+      set('leg2Line',    '🛤 Line: '          + ((l2fos - l2ios) / 3600000).toFixed(1) + 'h');
+      set('leg2TermIn',  '🏭 Terminal in: '  + ((ret - l2fos) / 3600000).toFixed(1) + 'h');
     }
-  } else {
-    set('prevLeg1', '—');
-    set('prevBunk', '—');
-    set('inlineLeg1Val', '—');
-    set('inlineBunkVal', '—');
+  }
+
+  // Totals — needs all four main times
+  if (depDate && leg1On && retDate && leg2Off) {
+    const dep   = new Date(depDate + 'T' + leg1On);
+    const ret   = new Date(retDate + 'T' + leg2Off);
+    const hours = (ret - dep) / 3600000;
+    if (hours > 0) {
+      const meals  = calcMeals(hours);
+      const gross  = meals * cfg.rate;
+      const deduct = gross * (cfg.deduct / 100);
+      set('prevHours',  hours.toFixed(1) + 'h');
+      set('prevMeals',  meals);
+      set('prevDeduct', '$' + deduct.toFixed(2));
+    }
   }
 }
 
@@ -1047,7 +1047,7 @@ function saveTrip() {
   const leg2Ios = document.getElementById('leg2IosBtn').dataset.val || '';
   const leg2Fos = document.getElementById('leg2FosBtn').dataset.val || '';
 
-  // Calculate terminal/line times for leg 1
+  // Leg 1: terminal out / line / terminal in
   let leg1TermOutH = 0, leg1LineH = 0, leg1TermInH = 0;
   if (leg1Off && leg1Ios && leg1Fos) {
     let l1off = new Date(depDate + 'T' + leg1Off);
@@ -1059,7 +1059,7 @@ function saveTrip() {
     leg1TermInH  = Math.max(0, (l1off - l1fos) / 3600000);
   }
 
-  // Calculate terminal/line times for leg 2
+  // Leg 2: terminal out / line / terminal in
   let leg2TermOutH = 0, leg2LineH = 0, leg2TermInH = 0;
   if (leg2On && leg2Ios && leg2Fos) {
     const l2on  = new Date(retDate + 'T' + leg2On);
