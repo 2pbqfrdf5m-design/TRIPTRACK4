@@ -211,7 +211,7 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
   <!-- Advanced mode + Role toggle bar -->
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
     <div style="flex:1;display:flex;align-items:center;gap:10px;background:var(--steel);border-radius:10px;padding:10px 14px;">
-      <span style="font-size:12px;color:var(--muted);font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Advanced</span>
+      <span style="font-size:12px;color:var(--muted);font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Detailed</span>
       <div id="advancedToggle" onclick="toggleAdvancedMode()" style="width:42px;height:24px;border-radius:12px;background:var(--track);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;">
         <div id="advancedThumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:9px;background:#fff;transition:transform 0.2s;"></div>
       </div>
@@ -290,9 +290,15 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     <span class="inline-duration-value" id="inlineLeg2Val">—</span>
   </div>
 
-  <!-- Coworkers -->
+  <!-- Crew — shown in Detailed mode -->
+  <div class="advanced-fields" id="crewSection">
   <div class="section-title" style="margin-top:14px;">Crew <span style="font-size:11px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
-  <div id="coworkerSlots" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+  <div id="coworkerSlots" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
+  <div style="display:flex;gap:8px;margin-bottom:10px;">
+    <input type="text" id="inlineCoworkerInput" placeholder="Add new crew member..." style="flex:1;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:11px 12px;border-radius:10px;font-size:16px;outline:none;">
+    <button onclick="addCoworkerInline()" style="background:var(--track);border:none;color:var(--gold);padding:11px 14px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">＋</button>
+  </div>
+  </div>
 
   <div class="form-group" style="margin-bottom:10px;margin-top:6px;">
     <label>Notes</label>
@@ -738,7 +744,6 @@ function applyAdvancedMode() {
     el.classList.toggle('visible', on);
   });
 }
-
 let currentRole = cfg.defaultRole || 'engineer';
 function setRole(role) {
   currentRole = role;
@@ -783,6 +788,24 @@ function renderCoworkerDropdowns() {
       row.appendChild(addBtn);
     }
     container.appendChild(row);
+  }
+}
+
+function addCoworkerInline() {
+  const inp = document.getElementById('inlineCoworkerInput');
+  const name = inp.value.trim();
+  if (!name) return;
+  if (!coworkers.includes(name)) {
+    coworkers.push(name);
+    saveCoworkers(coworkers);
+    renderCoworkerManager();
+  }
+  inp.value = '';
+  renderCoworkerDropdowns();
+  // Auto-select in first empty slot
+  for (let i = 0; i < activeCoworkerSlots; i++) {
+    const sel = document.getElementById('coworker' + i);
+    if (sel && !sel.value) { sel.value = name; break; }
   }
 }
 
@@ -863,6 +886,15 @@ function autoFillRetDate() {
   }
 }
 
+function fmtHours(h) {
+  if (!h || h <= 0) return '—';
+  const hrs = Math.floor(h);
+  const mins = Math.round((h - hrs) * 60);
+  if (mins === 0) return hrs + 'h';
+  if (hrs === 0) return mins + 'm';
+  return hrs + 'h ' + mins + 'm';
+}
+
 function fmt12(t) {
   if (!t) return '';
   const [h, m] = t.split(':').map(Number);
@@ -930,17 +962,17 @@ function updatePreview() {
     let l1off   = new Date(depDate + 'T' + leg1Off);
     if (l1off <= dep) l1off = new Date(l1off.getTime() + 86400000);
     const l1h = (l1off - dep) / 3600000;
-    set('prevLeg1',      l1h.toFixed(1) + 'h');
-    set('inlineLeg1Val', l1h.toFixed(1) + 'h');
+    set('prevLeg1',      fmtHours(l1h));
+    set('inlineLeg1Val', fmtHours(l1h));
 
     // IOS/FOS chips for leg 1
     if (leg1Ios && leg1Fos) {
       const dep2   = new Date(depDate + 'T' + leg1On);
       const l1ios  = new Date(depDate + 'T' + leg1Ios);
       const l1fos  = new Date(depDate + 'T' + leg1Fos);
-      set('leg1TermOut', '🏭 Terminal out: ' + ((l1ios - dep2) / 3600000).toFixed(1) + 'h');
+      set('leg1TermOut', '🏭 Terminal out: ' + (fmtHours((l1ios - dep2) / 3600000)));
       set('leg1Line',    '🛤 Line: '          + ((l1fos - l1ios) / 3600000).toFixed(1) + 'h');
-      set('leg1TermIn',  '🏭 Terminal in: '  + ((l1off - l1fos) / 3600000).toFixed(1) + 'h');
+      set('leg1TermIn',  '🏭 Terminal in: '  + (fmtHours((l1off - l1fos) / 3600000)));
     }
   }
 
@@ -951,8 +983,8 @@ function updatePreview() {
     if (l1off <= dep) l1off = new Date(l1off.getTime() + 86400000);
     const l2on = new Date(retDate + 'T' + leg2On);
     const bunk = (l2on - l1off) / 3600000;
-    set('prevBunk',      bunk > 0 ? bunk.toFixed(1) + 'h' : '—');
-    set('inlineBunkVal', bunk > 0 ? bunk.toFixed(1) + 'h' : '—');
+    set('prevBunk',      bunk > 0 ? fmtHours(bunk) : '—');
+    set('inlineBunkVal', bunk > 0 ? fmtHours(bunk) : '—');
   }
 
   // Leg 2 duration — needs retDate + leg2On + leg2Off
@@ -960,16 +992,16 @@ function updatePreview() {
     const l2on = new Date(retDate + 'T' + leg2On);
     const ret  = new Date(retDate + 'T' + leg2Off);
     const l2h  = (ret - l2on) / 3600000;
-    set('prevLeg2',      l2h > 0 ? l2h.toFixed(1) + 'h' : '—');
-    set('inlineLeg2Val', l2h > 0 ? l2h.toFixed(1) + 'h' : '—');
+    set('prevLeg2',      l2h > 0 ? fmtHours(l2h) : '—');
+    set('inlineLeg2Val', l2h > 0 ? fmtHours(l2h) : '—');
 
     // IOS/FOS chips for leg 2
     if (leg2Ios && leg2Fos) {
       const l2ios = new Date(retDate + 'T' + leg2Ios);
       const l2fos = new Date(retDate + 'T' + leg2Fos);
-      set('leg2TermOut', '🏭 Terminal out: ' + ((l2ios - l2on) / 3600000).toFixed(1) + 'h');
-      set('leg2Line',    '🛤 Line: '          + ((l2fos - l2ios) / 3600000).toFixed(1) + 'h');
-      set('leg2TermIn',  '🏭 Terminal in: '  + ((ret - l2fos) / 3600000).toFixed(1) + 'h');
+      set('leg2TermOut', '🏭 Terminal out: ' + (fmtHours((l2ios - l2on) / 3600000)));
+      set('leg2Line',    '🛤 Line: '          + (fmtHours((l2fos - l2ios) / 3600000)));
+      set('leg2TermIn',  '🏭 Terminal in: '  + (fmtHours((ret - l2fos) / 3600000)));
     }
   }
 
@@ -982,7 +1014,7 @@ function updatePreview() {
       const meals  = calcMeals(hours);
       const gross  = meals * cfg.rate;
       const deduct = gross * (cfg.deduct / 100);
-      set('prevHours',  hours.toFixed(1) + 'h');
+      set('prevHours',  fmtHours(hours));
       set('prevMeals',  meals);
       set('prevDeduct', '$' + deduct.toFixed(2));
     }
@@ -1280,9 +1312,9 @@ function renderTrips() {
       <td>${t.depTime}</td>
       <td>${fmtDate(t.retDate)}</td>
       <td>${t.retTime}</td>
-      <td>${t.hours.toFixed(1)}</td>
-      <td>${t.onDutyH ? t.onDutyH.toFixed(1) : '—'}</td>
-      <td>${t.bunkhouseH ? t.bunkhouseH.toFixed(1) : '—'}</td>
+      <td>${fmtHours(t.hours)}</td>
+      <td>${fmtHours(t.onDutyH)}</td>
+      <td>${fmtHours(t.bunkhouseH)}</td>
       <td style="color:var(--gold);font-weight:700;">${t.meals}</td>
       <td>$${t.gross.toFixed(2)}</td>
       <td style="color:var(--green);font-weight:700;">$${t.deduct.toFixed(2)}</td>
@@ -1291,7 +1323,7 @@ function renderTrips() {
 
   foot.innerHTML = `<tr>
     <td colspan="5" style="font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;">TOTALS — ${sorted.length} trips</td>
-    <td>${ta.toFixed(1)}</td><td>—</td><td>—</td>
+    <td>${fmtHours(ta)}</td><td>—</td><td>—</td>
     <td style="color:var(--gold);">${tm}</td>
     <td>$${tg.toFixed(2)}</td>
     <td style="color:var(--green);">$${td.toFixed(2)}</td>
@@ -1671,7 +1703,7 @@ function exportCSV() {
   const rows = [['#','Dep Date','Dep Time','Ret Date','Ret Time','Hours Away','On Duty h','Bunkhouse h','Meals','Gross','Deductible','Train Out','Train Back','Notes']];
   sorted.forEach((t,i) => rows.push([
     i+1, t.depDate, t.depTime, t.retDate, t.retTime,
-    t.hours.toFixed(1), t.onDutyH ? t.onDutyH.toFixed(1) : '',
+    fmtHours(t.hours), t.onDutyH ? t.onDutyH.toFixed(1) : '',
     t.bunkhouseH ? t.bunkhouseH.toFixed(1) : '',
     t.meals, t.gross.toFixed(2), t.deduct.toFixed(2),
     t.trainOut||'', t.trainBack||'', t.notes||''
@@ -1696,9 +1728,9 @@ function exportPDF() {
     <td>${i+1}</td><td>${fmtDate(t.depDate)}</td><td>${t.depTime}</td>
     <td>${fmtDate(t.retDate)}</td><td>${t.retTime}</td>
     <td>${t.origin||cfg.origin} → ${t.dest||cfg.dest}</td>
-    <td>${t.hours.toFixed(1)}</td>
-    <td>${t.onDutyH ? t.onDutyH.toFixed(1) : '—'}</td>
-    <td>${t.bunkhouseH ? t.bunkhouseH.toFixed(1) : '—'}</td>
+    <td>${fmtHours(t.hours)}</td>
+    <td>${fmtHours(t.onDutyH)}</td>
+    <td>${fmtHours(t.bunkhouseH)}</td>
     <td>${t.meals}</td><td>$${t.gross.toFixed(2)}</td><td>$${t.deduct.toFixed(2)}</td>
     <td>${t.trainOut||''}${t.trainBack?' / '+t.trainBack:''}</td>
     <td>${t.notes||''}</td>
@@ -1735,7 +1767,7 @@ tfoot td { background:#f0f4ff; font-weight:bold; border-top:2px solid #1a1a2e; }
 <table>
 <thead><tr><th>#</th><th>Dep Date</th><th>Dep Time</th><th>Ret Date</th><th>Ret Time</th><th>Route</th><th>Away h</th><th>On Duty</th><th>Bunkhouse</th><th>Meals</th><th>Gross</th><th>Deductible</th><th>Trains</th><th>Notes</th></tr></thead>
 <tbody>${rows}</tbody>
-<tfoot><tr><td colspan="6">TOTALS — ${sorted.length} trips</td><td>${ta.toFixed(1)}</td><td>—</td><td>—</td><td>${tm}</td><td>$${tg.toFixed(2)}</td><td>$${td.toFixed(2)}</td><td></td><td></td></tr></tfoot>
+<tfoot><tr><td colspan="6">TOTALS — ${sorted.length} trips</td><td>${fmtHours(ta)}</td><td>—</td><td>—</td><td>${tm}</td><td>$${tg.toFixed(2)}</td><td>$${td.toFixed(2)}</td><td></td><td></td></tr></tfoot>
 </table>
 <div class="footer">
 <strong>CRA Reference:</strong> Simplified method per IT-518R. Railway employees claim 50% on <strong>Line 22900</strong>. Supporting docs: <strong>TL2</strong> and <strong>T2200</strong>. Retain records 6 years.<br>
