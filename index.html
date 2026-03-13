@@ -30,10 +30,10 @@
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html { height: -webkit-fill-available; background: var(--dark); }
 body { min-height: 100vh; min-height: -webkit-fill-available; background: var(--dark); color: var(--light); font-family: 'Barlow', sans-serif; overflow: hidden; }
-.app { height: 100vh; height: -webkit-fill-available; display: flex; flex-direction: column; overflow: hidden; padding-top: env(safe-area-inset-top, 0px); }
+.app { height: 100vh; height: -webkit-fill-available; display: flex; flex-direction: column; overflow: hidden; }
 
 /* TABS */
-.tab { display: none; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 16px calc(100px + var(--sab)); max-width: 860px; margin: 0 auto; width: 100%; }
+.tab { display: none; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px calc(100px + var(--sab)); max-width: 860px; margin: 0 auto; width: 100%; }
 .tab.active { display: block; }
 
 /* NAV */
@@ -283,7 +283,6 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
       <span class="adv-chip" id="leg2Line">🛤 Line: —</span>
       <span class="adv-chip" id="leg2TermIn">🏭 Terminal in: —</span>
     </div>
-  </div>
   </div>
 
   <div class="inline-duration" id="inlineLeg2">
