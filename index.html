@@ -222,32 +222,30 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     </div>
   </div>
 
-  <div style="display:flex;gap:10px;margin-bottom:12px;">
-    <div class="form-group" style="flex:2;">
-      <label>Destination</label>
-      <select id="routeSelect" style="width:100%;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:12px 14px;border-radius:10px;font-size:16px;font-family:'Barlow',sans-serif;"></select>
-    </div>
-    <div class="form-group" style="flex:1;">
-      <label>Trip Type</label>
-      <select id="tripTypeSelect" onchange="saveCfg()" style="width:100%;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:12px 10px;border-radius:10px;font-size:15px;font-family:'Barlow',sans-serif;"></select>
-    </div>
+  <!-- Leg 1 — Departure -->
+  <div style="display:flex;gap:10px;margin-bottom:8px;align-items:flex-end;">
+    <div class="leg-label" style="margin:0;flex:1;">Leg 1 — Departure</div>
+    <select id="tripTypeSelect" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:6px 8px;border-radius:8px;font-size:13px;font-family:'Barlow',sans-serif;flex-shrink:0;">
+    </select>
   </div>
-
-  <div class="leg-label">Leg 1 — Departure</div>
   <div class="form-row" style="grid-template-columns:3fr 2fr;">
-    <div class="form-group"><label>Date</label><input type="date" id="depDate" onchange="updatePreview()"></div>
+    <div class="form-group"><label>Destination</label>
+      <select id="routeSelect" style="width:100%;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:11px 12px;border-radius:10px;font-size:16px;font-family:'Barlow',sans-serif;"></select>
+    </div>
     <div class="form-group"><label>Train</label><input type="text" id="trainOut" placeholder="Q199" autocomplete="off" autocapitalize="characters"></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label>Date</label><input type="date" id="depDate" onchange="updatePreview()"></div>
+    <div class="form-group" style="flex-row:row;"></div>
   </div>
   <div class="form-row">
     <div class="form-group"><label>On Duty</label><button class="time-btn" id="depTimeBtn" onclick="openPicker('dep')">Tap to set</button></div>
     <div class="form-group"><label>Off Duty</label><button class="time-btn" id="arrDestBtn" onclick="openPicker('arrDest')">Tap to set</button></div>
   </div>
-
-  <!-- Advanced: Leg 1 IOS/FOS -->
   <div class="advanced-fields" id="advLeg1">
     <div class="form-row">
-      <div class="form-group"><label>IOS (Initial Outer Switch)</label><button class="time-btn adv-btn" id="leg1IosBtn" onclick="openPicker('leg1ios')">Tap to set</button></div>
-      <div class="form-group"><label>FOS (Final Outer Switch)</label><button class="time-btn adv-btn" id="leg1FosBtn" onclick="openPicker('leg1fos')">Tap to set</button></div>
+      <div class="form-group"><label>IOS</label><button class="time-btn adv-btn" id="leg1IosBtn" onclick="openPicker('leg1ios')">Tap to set</button></div>
+      <div class="form-group"><label>FOS</label><button class="time-btn adv-btn" id="leg1FosBtn" onclick="openPicker('leg1fos')">Tap to set</button></div>
     </div>
     <div class="adv-duration-row">
       <span class="adv-chip" id="leg1TermOut">🏭 Terminal out: —</span>
@@ -255,12 +253,12 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
       <span class="adv-chip" id="leg1TermIn">🏭 Terminal in: —</span>
     </div>
   </div>
-
-  <div class="inline-duration" id="inlineLeg1">
+  <div class="inline-duration">
     <span class="inline-duration-label">Leg 1 on duty</span>
     <span class="inline-duration-value" id="inlineLeg1Val">—</span>
   </div>
 
+  <!-- Bunkhouse 1 + AFHT button -->
   <div class="bunkhouse-strip" id="bunkhouseStrip">
     <span>🛏</span>
     <span class="bunkhouse-label">Bunkhouse</span>
@@ -268,57 +266,13 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     <button id="addTurnBtn" onclick="addTurnLeg()" style="background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.3);color:var(--gold);padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;white-space:nowrap;">＋ AFHT TURN</button>
   </div>
 
-  <div class="leg-label">Leg 2 — Return</div>
-  <div class="form-row" style="grid-template-columns:3fr 2fr;">
-    <div class="form-group"><label>Date</label><input type="date" id="retDate" onchange="updatePreview()"></div>
-    <div class="form-group"><label>Train</label><input type="text" id="trainBack" placeholder="U752" autocomplete="off" autocapitalize="characters"></div>
-  </div>
-  <div class="form-row">
-    <div class="form-group"><label>On Duty</label><button class="time-btn" id="depDestBtn" onclick="openPicker('depDest')">Tap to set</button></div>
-    <div class="form-group"><label>Off Duty</label><button class="time-btn" id="retTimeBtn" onclick="openPicker('ret')">Tap to set</button></div>
-  </div>
-
-  <!-- Advanced: Leg 2 IOS/FOS -->
-  <div class="advanced-fields" id="advLeg2">
-    <div class="form-row">
-      <div class="form-group"><label>IOS (Initial Outer Switch)</label><button class="time-btn adv-btn" id="leg2IosBtn" onclick="openPicker('leg2ios')">Tap to set</button></div>
-      <div class="form-group"><label>FOS (Final Outer Switch)</label><button class="time-btn adv-btn" id="leg2FosBtn" onclick="openPicker('leg2fos')">Tap to set</button></div>
-    </div>
-    <div class="adv-duration-row">
-      <span class="adv-chip" id="leg2TermOut">🏭 Terminal out: —</span>
-      <span class="adv-chip" id="leg2Line">🛤 Line: —</span>
-      <span class="adv-chip" id="leg2TermIn">🏭 Terminal in: —</span>
-    </div>
-  </div>
-
-  <div class="inline-duration" id="inlineLeg2">
-    <span class="inline-duration-label">Leg 2 on duty</span>
-    <span class="inline-duration-value" id="inlineLeg2Val">—</span>
-  </div>
-
-  <!-- Crew — shown in Detailed mode -->
-  <div class="advanced-fields" id="crewSection">
-  <div class="section-title" style="margin-top:14px;">Crew <span style="font-size:11px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
-  <div id="coworkerSlots" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
-  <div style="display:flex;gap:8px;margin-bottom:10px;">
-    <input type="text" id="inlineCoworkerInput" placeholder="Add new crew member..." style="flex:1;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:11px 12px;border-radius:10px;font-size:16px;outline:none;">
-    <button onclick="addCoworkerInline()" style="background:var(--track);border:none;color:var(--gold);padding:11px 14px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">＋</button>
-  </div>
-  </div>
-
-  <div class="form-group" style="margin-bottom:10px;margin-top:6px;">
-    <label>Notes</label>
-    <input type="text" id="notes" placeholder="Optional">
-  </div>
-
-  <!-- Turn leg -->
+  <!-- AFHT Turn leg (hidden by default, appears between leg 1 and leg 2) -->
   <div id="turnLegSection" style="display:none;">
-    <div class="bunkhouse-strip" style="margin-top:8px;">
-      <span>🛏</span>
-      <span class="bunkhouse-label">Bunkhouse 2</span>
-      <span class="bunkhouse-value" id="inlineBunk2Val">—</span>
+    <div style="display:flex;gap:10px;margin-bottom:8px;align-items:flex-end;">
+      <div class="leg-label" style="margin:0;flex:1;color:var(--gold);">AFHT Turn</div>
+      <select id="tripTypeAfht" style="background:var(--steel);border:1px solid rgba(240,165,0,0.3);color:var(--gold);padding:6px 8px;border-radius:8px;font-size:13px;font-family:'Barlow',sans-serif;flex-shrink:0;"></select>
+      <button onclick="removeTurnLeg()" style="background:none;border:1px solid rgba(227,24,55,0.3);color:var(--red);padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">✕</button>
     </div>
-    <div class="leg-label">Leg 3 — Return</div>
     <div class="form-row" style="grid-template-columns:3fr 2fr;">
       <div class="form-group"><label>Date</label><input type="date" id="leg3Date" onchange="updatePreview()"></div>
       <div class="form-group"><label>Train</label><input type="text" id="trainLeg3" placeholder="Q199" autocomplete="off" autocapitalize="characters"></div>
@@ -329,8 +283,8 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     </div>
     <div class="advanced-fields" id="advLeg3">
       <div class="form-row">
-        <div class="form-group"><label>IOS (Initial Outer Switch)</label><button class="time-btn adv-btn" id="leg3IosBtn" onclick="openPicker('leg3ios')">Tap to set</button></div>
-        <div class="form-group"><label>FOS (Final Outer Switch)</label><button class="time-btn adv-btn" id="leg3FosBtn" onclick="openPicker('leg3fos')">Tap to set</button></div>
+        <div class="form-group"><label>IOS</label><button class="time-btn adv-btn" id="leg3IosBtn" onclick="openPicker('leg3ios')">Tap to set</button></div>
+        <div class="form-group"><label>FOS</label><button class="time-btn adv-btn" id="leg3FosBtn" onclick="openPicker('leg3fos')">Tap to set</button></div>
       </div>
       <div class="adv-duration-row">
         <span class="adv-chip" id="leg3TermOut">🏭 Terminal out: —</span>
@@ -339,10 +293,55 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
       </div>
     </div>
     <div class="inline-duration">
-      <span class="inline-duration-label">Leg 3 on duty</span>
+      <span class="inline-duration-label">AFHT on duty</span>
       <span class="inline-duration-value" id="inlineLeg3Val">—</span>
     </div>
-    <button onclick="removeTurnLeg()" style="width:100%;margin:8px 0;padding:10px;background:none;border:1px solid rgba(227,24,55,0.3);border-radius:10px;color:var(--red);font-size:13px;font-weight:600;cursor:pointer;">✕ Remove Turn Leg</button>
+
+    <!-- Bunkhouse 2 -->
+    <div class="bunkhouse-strip">
+      <span>🛏</span>
+      <span class="bunkhouse-label">Bunkhouse 2</span>
+      <span class="bunkhouse-value" id="inlineBunk2Val">—</span>
+    </div>
+  </div>
+
+  <!-- Leg 2 — Return -->
+  <div style="display:flex;gap:10px;margin-bottom:8px;align-items:flex-end;">
+    <div class="leg-label" style="margin:0;flex:1;">Leg 2 — Return</div>
+    <select id="tripTypeReturn" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:6px 8px;border-radius:8px;font-size:13px;font-family:'Barlow',sans-serif;flex-shrink:0;"></select>
+  </div>
+  <div class="form-row" style="grid-template-columns:3fr 2fr;">
+    <div class="form-group"><label>Date</label><input type="date" id="retDate" onchange="updatePreview()"></div>
+    <div class="form-group"><label>Train</label><input type="text" id="trainBack" placeholder="U752" autocomplete="off" autocapitalize="characters"></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label>On Duty</label><button class="time-btn" id="depDestBtn" onclick="openPicker('depDest')">Tap to set</button></div>
+    <div class="form-group"><label>Off Duty</label><button class="time-btn" id="retTimeBtn" onclick="openPicker('ret')">Tap to set</button></div>
+  </div>
+  <div class="advanced-fields" id="advLeg2">
+    <div class="form-row">
+      <div class="form-group"><label>IOS</label><button class="time-btn adv-btn" id="leg2IosBtn" onclick="openPicker('leg2ios')">Tap to set</button></div>
+      <div class="form-group"><label>FOS</label><button class="time-btn adv-btn" id="leg2FosBtn" onclick="openPicker('leg2fos')">Tap to set</button></div>
+    </div>
+    <div class="adv-duration-row">
+      <span class="adv-chip" id="leg2TermOut">🏭 Terminal out: —</span>
+      <span class="adv-chip" id="leg2Line">🛤 Line: —</span>
+      <span class="adv-chip" id="leg2TermIn">🏭 Terminal in: —</span>
+    </div>
+  </div>
+  <div class="inline-duration">
+    <span class="inline-duration-label">Leg 2 on duty</span>
+    <span class="inline-duration-value" id="inlineLeg2Val">—</span>
+  </div>
+
+  <!-- Crew — shown in Detailed mode -->
+  <div class="advanced-fields" id="crewSection">
+    <div class="section-title" style="margin-top:14px;">Crew <span style="font-size:11px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
+    <div id="coworkerSlots" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <input type="text" id="inlineCoworkerInput" placeholder="Add new crew member..." style="flex:1;background:var(--steel);border:1px solid var(--track);color:var(--light);padding:11px 12px;border-radius:10px;font-size:16px;outline:none;">
+      <button onclick="addCoworkerInline()" style="background:var(--track);border:none;color:var(--gold);padding:11px 14px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">＋</button>
+    </div>
   </div>
 
   <div class="form-group" style="margin-bottom:10px;margin-top:6px;">
@@ -350,14 +349,12 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     <input type="text" id="notes" placeholder="Optional">
   </div>
 
-  <!-- Turn leg -->
-
   <div class="duty-preview">
     <div class="duty-row"><span class="duty-label">Leg 1 on duty</span><span class="duty-value" id="prevLeg1">—</span></div>
-    <div class="duty-row"><span class="duty-label">Bunkhouse (auto)</span><span class="duty-value" id="prevBunk">—</span></div>
+    <div class="duty-row"><span class="duty-label">Bunkhouse</span><span class="duty-value" id="prevBunk">—</span></div>
+    <div class="duty-row" id="prevLeg3Row" style="display:none;"><span class="duty-label">AFHT on duty</span><span class="duty-value" id="prevLeg3">—</span></div>
+    <div class="duty-row" id="prevBunk2Row" style="display:none;"><span class="duty-label">Bunkhouse 2</span><span class="duty-value" id="prevBunk2">—</span></div>
     <div class="duty-row"><span class="duty-label">Leg 2 on duty</span><span class="duty-value" id="prevLeg2">—</span></div>
-    <div class="duty-row" id="prevBunk2Row" style="display:none;"><span class="duty-label">Bunkhouse 2 (auto)</span><span class="duty-value" id="prevBunk2">—</span></div>
-    <div class="duty-row" id="prevLeg3Row" style="display:none;"><span class="duty-label">Leg 3 on duty</span><span class="duty-value" id="prevLeg3">—</span></div>
     <div class="duty-row"><span class="duty-label">Total hours away</span><span class="duty-value" id="prevHours">—</span></div>
     <div class="duty-row"><span class="duty-label">Meals claimable</span><span class="duty-value gold" id="prevMeals">—</span></div>
     <div class="duty-row"><span class="duty-label">Deductible (Line 22900)</span><span class="duty-value green" id="prevDeduct">—</span></div>
@@ -500,7 +497,7 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
 
   <div class="section-title" style="margin-top:20px;">Import CSV Data</div>
   <div style="background:var(--steel);border-radius:12px;padding:16px;margin-bottom:12px;">
-    <div style="color:var(--muted);font-size:13px;margin-bottom:10px;">Paste exported CSV rows below. Each row: <span style="color:var(--gold);font-family:monospace;font-size:11px;">dep_date, dep_time, ret_date, ret_time, origin, dest, hours, meals, rate, gross, deduct_pct, deductible, notes</span></div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:10px;">Paste exported Trip Track CSV rows below. Supports both current and previous export formats — new names in Crew column will be saved automatically.</div>
     <textarea id="csvPasteArea" placeholder="Paste CSV rows here..." style="width:100%;height:120px;background:var(--navy);border:1px solid var(--track);border-radius:10px;color:var(--light);font-family:monospace;font-size:12px;padding:10px;resize:vertical;outline:none;"></textarea>
     <button onclick="importCSVPaste()" style="width:100%;margin-top:10px;padding:13px;background:var(--green);border:none;border-radius:10px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:0.5px;cursor:pointer;">✓ IMPORT CSV</button>
   </div>
@@ -837,10 +834,12 @@ function confirmPicker() {
 // TRIP TYPES
 // ══════════════════════════════════════════════════════════════════
 function renderTripTypeDropdown() {
-  const sel = document.getElementById('tripTypeSelect');
-  if (!sel) return;
   const last = cfg.lastTripType || tripTypes[0];
-  sel.innerHTML = tripTypes.map(t => `<option value="${t}" ${t===last?'selected':''}>${t}</option>`).join('');
+  ['tripTypeSelect','tripTypeReturn','tripTypeAfht'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = tripTypes.map(t => `<option value="${t}" ${t===last?'selected':''}>${t}</option>`).join('');
+  });
 }
 
 function renderTripTypeManager() {
@@ -1265,9 +1264,13 @@ function saveTrip() {
     bunkhouseH = Math.max(0, (l2on - l1off) / 3600000);
   }
 
-  // Trip type
+  // Trip type per leg
   const tripTypeSel = document.getElementById('tripTypeSelect');
+  const tripTypeRetSel = document.getElementById('tripTypeReturn');
+  const tripTypeAfhtSel = document.getElementById('tripTypeAfht');
   const tripType = tripTypeSel ? tripTypeSel.value : 'Thru Freight';
+  const tripTypeReturn = tripTypeRetSel ? tripTypeRetSel.value : tripType;
+  const tripTypeAfht = tripTypeAfhtSel ? tripTypeAfhtSel.value : 'Thru Freight';
   cfg.lastTripType = tripType;
   saveCfg();
 
@@ -1359,7 +1362,7 @@ function saveTrip() {
     trainBack: document.getElementById('trainBack').value.trim().toUpperCase(),
     series: getTrainSeries(document.getElementById('trainOut').value),
     role: currentRole,
-    tripType,
+    tripType, tripTypeReturn, tripTypeAfht,
     coworkers: getSelectedCoworkers(),
     hasTurnLeg, leg3Date, leg3On, leg3Off, trainLeg3,
     leg3Ios, leg3Fos, leg3TermOutH, leg3LineH, leg3TermInH,
@@ -1410,7 +1413,6 @@ function resetForm() {
   renderCoworkerDropdowns();
   renderTripTypeDropdown();
 }
-
 // ══════════════════════════════════════════════════════════════════
 // ONBOARDING
 // ══════════════════════════════════════════════════════════════════
@@ -2135,15 +2137,33 @@ Supporting form: TL2 Claim for Meals and Lodging Expenses.`;
 function exportCSV() {
   if (!trips.length) { showToast('No trips to export', true); return; }
   const sorted = [...trips].sort((a,b) => a.depDate.localeCompare(b.depDate));
-  const rows = [['#','Dep Date','Dep Time','Ret Date','Ret Time','Hours Away','On Duty h','Bunkhouse h','Meals','Gross','Deductible','Train Out','Train Back','Notes']];
+  const headers = [
+    '#','Dep Date','Dep Time','Leg1 Off','Ret Date','Leg2 On','Ret Time',
+    'Origin','Dest','Trip Type','Role',
+    'Train Out','Train Back',
+    'Leg1 IOS','Leg1 FOS','Leg2 IOS','Leg2 FOS',
+    'Has Turn','Leg3 Date','Leg3 On','Leg3 Off','Train Leg3',
+    'Hours Away','On Duty h','Bunkhouse h','Meals','Gross','Deductible',
+    'Crew','Notes'
+  ];
+  const rows = [headers];
   sorted.forEach((t,i) => rows.push([
-    i+1, t.depDate, t.depTime, t.retDate, t.retTime,
-    fmtHours(t.hours), t.onDutyH ? t.onDutyH.toFixed(1) : '',
-    t.bunkhouseH ? t.bunkhouseH.toFixed(1) : '',
-    t.meals, t.gross.toFixed(2), t.deduct.toFixed(2),
-    t.trainOut||'', t.trainBack||'', t.notes||''
+    i+1,
+    t.depDate, t.depTime, t.leg1OffTime||'',
+    t.retDate, t.leg2OnTime||'', t.retTime,
+    t.origin||'', t.dest||'',
+    t.tripType||'Thru Freight', t.role||'engineer',
+    t.trainOut||'', t.trainBack||'',
+    t.leg1Ios||'', t.leg1Fos||'', t.leg2Ios||'', t.leg2Fos||'',
+    t.hasTurnLeg?'Y':'', t.leg3Date||'', t.leg3On||'', t.leg3Off||'', t.trainLeg3||'',
+    t.hours ? t.hours.toFixed(2) : '',
+    t.onDutyH ? t.onDutyH.toFixed(2) : '',
+    t.bunkhouseH ? t.bunkhouseH.toFixed(2) : '',
+    t.meals, t.gross ? t.gross.toFixed(2) : '', t.deduct ? t.deduct.toFixed(2) : '',
+    (t.coworkers||[]).join(';'),
+    t.notes||''
   ]));
-  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
   a.download = `TripTracker_${activeYear}.csv`;
@@ -2276,10 +2296,9 @@ function importCSVPaste() {
   const lines = raw.split('\n').map(l => l.trim()).filter(l => l);
   let added = 0, skipped = 0;
 
-  lines.forEach(line => {
-    // Parse CSV line respecting quoted fields
-    const cols = [];
-    let cur = '', inQ = false;
+  // Parse one CSV line into array of fields
+  function parseCSVLine(line) {
+    const cols = []; let cur = '', inQ = false;
     for (let i = 0; i < line.length; i++) {
       const c = line[i];
       if (c === '"') { inQ = !inQ; }
@@ -2287,17 +2306,63 @@ function importCSVPaste() {
       else { cur += c; }
     }
     cols.push(cur.trim());
+    return cols.map(c => c.replace(/^"|"$/g,'').replace(/""/g,'"'));
+  }
 
-    // Skip header rows
-    if (cols[0].toLowerCase().includes('date') || cols[0].toLowerCase().includes('dep')) return;
+  // Detect if first line is a header
+  const firstCols = parseCSVLine(lines[0]);
+  const isHeader = isNaN(firstCols[0]) && (firstCols[0].toLowerCase().includes('dep') || firstCols[0] === '#' || firstCols[0].toLowerCase() === 'num');
+  const dataLines = isHeader ? lines.slice(1) : lines;
 
-    const depDate = cols[0]; const depTime = cols[1];
-    const retDate = cols[2]; const retTime = cols[3];
-    const origin  = (cols[4]||'').replace(/^"|"$/g,'');
-    const dest    = (cols[5]||'').replace(/^"|"$/g,'');
-    const notes   = (cols[12]||'').replace(/^"|"$/g,'');
+  // Column map for new full format (by index):
+  // 0:#  1:DepDate  2:DepTime  3:Leg1Off  4:RetDate  5:Leg2On  6:RetTime
+  // 7:Origin  8:Dest  9:TripType  10:Role
+  // 11:TrainOut  12:TrainBack
+  // 13:Leg1IOS  14:Leg1FOS  15:Leg2IOS  16:Leg2FOS
+  // 17:HasTurn  18:Leg3Date  19:Leg3On  20:Leg3Off  21:TrainLeg3
+  // 22:Hours  23:OnDuty  24:Bunkhouse  25:Meals  26:Gross  27:Deductible
+  // 28:Crew  29:Notes
+  //
+  // Old minimal format (fallback): 0:#/num  1:DepDate  2:DepTime  3:RetDate  4:RetTime ... 28+:Notes
+
+  dataLines.forEach(line => {
+    const c = parseCSVLine(line);
+    if (c.length < 4) { skipped++; return; }
+
+    // Detect format — new format has leg1OffTime at col 3, old has RetDate
+    // New format: col 4 looks like a date (YYYY-MM-DD), col 3 looks like time (HH:MM) or empty
+    const isNewFormat = c.length >= 22 && /^\d{4}-\d{2}-\d{2}$/.test(c[4]);
+
+    let depDate, depTime, leg1OffTime, retDate, leg2OnTime, retTime;
+    let origin, dest, tripType, role;
+    let trainOut, trainBack, leg1Ios, leg1Fos, leg2Ios, leg2Fos;
+    let hasTurnLeg, leg3Date, leg3On, leg3Off, trainLeg3;
+    let crew, notes;
+
+    if (isNewFormat) {
+      depDate=c[1]; depTime=c[2]; leg1OffTime=c[3];
+      retDate=c[4]; leg2OnTime=c[5]; retTime=c[6];
+      origin=c[7]; dest=c[8]; tripType=c[9]||'Thru Freight'; role=c[10]||'engineer';
+      trainOut=c[11]; trainBack=c[12];
+      leg1Ios=c[13]; leg1Fos=c[14]; leg2Ios=c[15]; leg2Fos=c[16];
+      hasTurnLeg=c[17]==='Y';
+      leg3Date=c[18]; leg3On=c[19]; leg3Off=c[20]; trainLeg3=c[21];
+      crew=c[28]||''; notes=c[29]||'';
+    } else {
+      // Old minimal format
+      depDate=c[1]||c[0]; depTime=c[2]||c[1];
+      retDate=c[3]||c[2]; retTime=c[4]||c[3];
+      leg1OffTime=''; leg2OnTime='';
+      origin=cfg.homeTerminal||''; dest='';
+      tripType='Thru Freight'; role='engineer';
+      trainOut=''; trainBack='';
+      leg1Ios=''; leg1Fos=''; leg2Ios=''; leg2Fos='';
+      hasTurnLeg=false; leg3Date=''; leg3On=''; leg3Off=''; trainLeg3='';
+      crew=''; notes=c[c.length-1]||'';
+    }
 
     if (!depDate || !depTime || !retDate || !retTime) { skipped++; return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(depDate)) { skipped++; return; }
 
     const dep = new Date(depDate + 'T' + depTime);
     const ret = new Date(retDate + 'T' + retTime);
@@ -2311,15 +2376,25 @@ function importCSVPaste() {
     const meals  = calcMeals(hours);
     const gross  = meals * cfg.rate;
     const deduct = gross * (cfg.deduct / 100);
+    const coworkers = crew ? crew.split(';').map(s=>s.trim()).filter(Boolean) : [];
+
+    // Add any new coworker names to the saved list
+    coworkers.forEach(cw => {
+      const list = loadCoworkers();
+      if (cw && !list.includes(cw)) { list.push(cw); saveCoworkers(list); }
+    });
 
     const trip = {
       id: Date.now() + Math.random(),
-      depDate, depTime, retDate, retTime,
-      leg1OffTime:'', leg2OnTime:'',
-      origin: origin || cfg.homeTerminal || '',
-      dest:   dest   || '',
-      routeId:'', miles: null,
-      notes, trainOut:'', trainBack:'', series:'',
+      depDate, depTime, leg1OffTime, retDate, leg2OnTime, retTime,
+      origin: origin||cfg.homeTerminal||'', dest,
+      tripType, role,
+      trainOut: trainOut.toUpperCase(), trainBack: trainBack.toUpperCase(),
+      series: getTrainSeries(trainOut),
+      leg1Ios, leg1Fos, leg2Ios, leg2Fos,
+      hasTurnLeg, leg3Date, leg3On, leg3Off, trainLeg3,
+      coworkers, notes,
+      routeId:'', miles:null,
       hours, meals, gross, deduct,
       rate: cfg.rate, deductPct: cfg.deduct,
       leg1h:0, leg2h:0, bunkhouseH:0, onDutyH:0
@@ -2331,6 +2406,10 @@ function importCSVPaste() {
     added++;
   });
 
+  // Reload coworkers in case new ones were added
+  coworkers = loadCoworkers();
+  renderCoworkerManager();
+  renderCoworkerDropdowns();
   renderTrips();
   document.getElementById('csvPasteArea').value = '';
   let msg = `Imported ${added} trip${added !== 1 ? 's' : ''}`;
