@@ -265,6 +265,7 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     <span>🛏</span>
     <span class="bunkhouse-label">Bunkhouse</span>
     <span class="bunkhouse-value" id="inlineBunkVal">—</span>
+    <button id="addTurnBtn" onclick="addTurnLeg()" style="background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.3);color:var(--gold);padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;white-space:nowrap;">＋ AFHT TURN</button>
   </div>
 
   <div class="leg-label">Leg 2 — Return</div>
@@ -344,7 +345,12 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     <button onclick="removeTurnLeg()" style="width:100%;margin:8px 0;padding:10px;background:none;border:1px solid rgba(227,24,55,0.3);border-radius:10px;color:var(--red);font-size:13px;font-weight:600;cursor:pointer;">✕ Remove Turn Leg</button>
   </div>
 
-  <button id="addTurnBtn" onclick="addTurnLeg()" style="width:100%;margin:8px 0 4px;padding:12px;background:none;border:1px dashed var(--track);border-radius:10px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:0.5px;cursor:pointer;">＋ ADD TURN LEG</button>
+  <div class="form-group" style="margin-bottom:10px;margin-top:6px;">
+    <label>Notes</label>
+    <input type="text" id="notes" placeholder="Optional">
+  </div>
+
+  <!-- Turn leg -->
 
   <div class="duty-preview">
     <div class="duty-row"><span class="duty-label">Leg 1 on duty</span><span class="duty-value" id="prevLeg1">—</span></div>
@@ -396,10 +402,45 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     <div class="cn-logo" style="background:var(--track);">📊</div>
     <div class="header-text"><h1>Data</h1><p id="data-year-label">Tax Year: 2025</p></div>
   </header>
-  <div class="chart-section"><div class="chart-title">Departure Hour Heatmap</div><canvas class="chart" id="chartHeat" height="80"></canvas></div>
+
+  <!-- Summary cards -->
+  <div id="dataStatCards" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;"></div>
+
+  <!-- Heatmaps -->
+  <div class="chart-section">
+    <div class="chart-title" id="heatHomeLabel">🏠 Home Starts</div>
+    <canvas class="chart" id="chartHeatHome" height="80"></canvas>
+  </div>
+  <div class="chart-section">
+    <div class="chart-title" id="heatAfhtLabel">🔄 AFHT Starts</div>
+    <canvas class="chart" id="chartHeatAfht" height="80"></canvas>
+  </div>
+
+  <!-- Trips by month -->
   <div class="chart-section"><div class="chart-title">Trips by Month</div><canvas class="chart" id="chartMonth" height="120"></canvas></div>
+
+  <!-- Busiest days -->
   <div class="chart-section"><div class="chart-title">Busiest Days of Week</div><canvas class="chart" id="chartDow" height="100"></canvas></div>
-  <button onclick="showWrapped()" style="width:100%;padding:15px;background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;border-radius:12px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:1px;cursor:pointer;margin-bottom:20px;">✨ GENERATE YEAR WRAPPED</button>
+
+  <!-- Trip type breakdown -->
+  <div class="chart-section"><div class="chart-title">Trip Types</div><div id="tripTypeBreakdown" style="display:flex;flex-direction:column;gap:6px;"></div></div>
+
+  <!-- Role breakdown -->
+  <div class="chart-section"><div class="chart-title">Role</div><div id="roleBreakdown" style="display:flex;gap:10px;"></div></div>
+
+  <!-- Coworker stats -->
+  <div class="chart-section"><div class="chart-title">Top Crew</div><div id="crewBreakdown" style="display:flex;flex-direction:column;gap:6px;"></div></div>
+
+  <!-- Train series -->
+  <div class="chart-section"><div class="chart-title">Train Series</div><div id="seriesBreakdown" style="display:flex;flex-direction:column;gap:6px;"></div></div>
+
+  <!-- Advanced stats (IOS/FOS) -->
+  <div id="advancedStats" style="display:none;">
+    <div class="section-title" style="margin-bottom:12px;">⏱ Terminal &amp; Line Times</div>
+    <div id="terminalStats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;"></div>
+    <div class="chart-section"><div class="chart-title">Fastest Trips Over the Road (Thru Freight)</div><div id="fastestTrips" style="display:flex;flex-direction:column;gap:6px;"></div></div>
+    <div class="chart-section"><div class="chart-title">Most Delayed Series (Avg ITD)</div><div id="seriesDelay" style="display:flex;flex-direction:column;gap:6px;"></div></div>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════ TAB: BOOKS -->
@@ -841,7 +882,6 @@ function addTurnLeg() {
   document.getElementById('addTurnBtn').style.display = 'none';
   document.getElementById('prevBunk2Row').style.display = 'flex';
   document.getElementById('prevLeg3Row').style.display = 'flex';
-  // Apply advanced mode to leg3 fields
   applyAdvancedMode();
 }
 
@@ -856,8 +896,8 @@ function removeTurnLeg() {
     if (!btn) return;
     btn.textContent = 'Tap to set'; btn.dataset.val = ''; btn.classList.remove('set');
   });
-  document.getElementById('trainLeg3').value = '';
-  document.getElementById('leg3Date').value = '';
+  const d = document.getElementById('trainLeg3'); if (d) d.value = '';
+  const d2 = document.getElementById('leg3Date'); if (d2) d2.value = '';
   updatePreview();
 }
 function toggleAdvancedMode() {
@@ -1679,7 +1719,9 @@ function addYear() {
 // DATA / CHARTS
 // ══════════════════════════════════════════════════════════════════
 function renderCharts() {
+  document.getElementById('data-year-label').textContent = 'Tax Year: ' + activeYear;
   if (!trips.length) return;
+  renderDataStats();
   drawHeatmap();
   drawMonthChart();
   drawDowChart();
@@ -1719,11 +1761,9 @@ function drawBar(canvasId, labels, values, color) {
   });
 }
 
-function drawHeatmap() {
-  const canvas = document.getElementById('chartHeat');
+function drawHeatmapCanvas(canvasId, bins) {
+  const canvas = document.getElementById(canvasId);
   if (!canvas) return;
-  const bins = Array(24).fill(0);
-  trips.forEach(t => { const h = parseInt(t.depTime); if (!isNaN(h) && h < 24) bins[h]++; });
   const ctx = canvas.getContext('2d');
   const W = canvas.offsetWidth * devicePixelRatio;
   const H = canvas.offsetHeight * devicePixelRatio;
@@ -1738,6 +1778,12 @@ function drawHeatmap() {
     ctx.beginPath();
     ctx.roundRect(i * cw + 1, 10, cw - 2, h - 30, 4);
     ctx.fill();
+    if (v > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = `bold 9px Barlow`;
+      ctx.textAlign = 'center';
+      ctx.fillText(v, i * cw + cw/2, h - 32);
+    }
     if (i % 3 === 0) {
       ctx.fillStyle = '#6b7f99';
       ctx.font = '10px Barlow';
@@ -1747,8 +1793,27 @@ function drawHeatmap() {
   });
 }
 
+function drawHeatmap() {
+  // Home terminal starts (Leg 1 on duty = depTime)
+  const homeLabel = document.getElementById('heatHomeLabel');
+  const afhtLabel = document.getElementById('heatAfhtLabel');
+  if (homeLabel) homeLabel.textContent = '🏠 ' + (cfg.homeTerminal || 'Home') + ' Starts';
+  if (afhtLabel) afhtLabel.textContent = '🔄 AFHT Starts';
+
+  const homeBins = Array(24).fill(0);
+  const afhtBins = Array(24).fill(0);
+  trips.forEach(t => {
+    const h1 = t.depTime ? parseInt(t.depTime) : NaN;
+    const h2 = t.leg2OnTime ? parseInt(t.leg2OnTime) : NaN;
+    if (!isNaN(h1) && h1 < 24) homeBins[h1]++;
+    if (!isNaN(h2) && h2 < 24) afhtBins[h2]++;
+  });
+  drawHeatmapCanvas('chartHeatHome', homeBins);
+  drawHeatmapCanvas('chartHeatAfht', afhtBins);
+}
+
 function drawMonthChart() {
-  const vals   = Array(12).fill(0);
+  const vals = Array(12).fill(0);
   trips.forEach(t => { const mo = parseInt(t.depDate.split('-')[1]) - 1; if (mo >= 0) vals[mo]++; });
   drawBar('chartMonth', MONTHS, vals, 'rgba(227,24,55,0.7)');
 }
@@ -1757,6 +1822,170 @@ function drawDowChart() {
   const vals = Array(7).fill(0);
   trips.forEach(t => { const d = new Date(t.depDate + 'T12:00'); vals[d.getDay()]++; });
   drawBar('chartDow', DAYS, vals, 'rgba(26,154,90,0.7)');
+}
+
+function renderDataStats() {
+  if (!trips.length) return;
+
+  const th = trips.reduce((s, t) => s + (t.hours || 0), 0);
+  const tm = trips.reduce((s, t) => s + (t.meals || 0), 0);
+  const td = trips.reduce((s, t) => s + (t.deduct || 0), 0);
+  const miles = trips.reduce((s, t) => s + (t.miles ? t.miles * 2 : 0), 0);
+  const longest = trips.reduce((best, t) => (!best || t.hours > best.hours) ? t : best, null);
+  const shortest = trips.filter(t => t.hours > 0).reduce((best, t) => (!best || t.hours < best.hours) ? t : best, null);
+  const avgHours = th / trips.length;
+  const onDuty = trips.reduce((s, t) => s + (t.onDutyH || 0), 0);
+  const bunkTotal = trips.reduce((s, t) => s + (t.bunkhouseH || 0), 0);
+  const turnTrips = trips.filter(t => t.hasTurnLeg).length;
+
+  // Stat cards
+  const cards = [
+    { label:'TRIPS', value: trips.length, sub:'logged', color:'' },
+    { label:'MEALS', value: tm, sub:'claimed', color:'color:var(--gold)' },
+    { label:'DEDUCTIBLE', value: '$'+td.toFixed(0), sub:'Line 22900', color:'color:var(--green)' },
+    { label:'MILES', value: miles ? miles.toFixed(0) : '—', sub:'on rails', color:'' },
+    { label:'HOURS AWAY', value: fmtHours(th), sub:'total', color:'' },
+    { label:'ON DUTY', value: fmtHours(onDuty), sub:'working', color:'' },
+    { label:'BUNKHOUSE', value: fmtHours(bunkTotal), sub:'resting', color:'color:#a855f7' },
+    { label:'AVG TRIP', value: fmtHours(avgHours), sub:'per trip', color:'' },
+    { label:'LONGEST', value: longest ? fmtHours(longest.hours) : '—', sub: longest ? fmtDate(longest.depDate) : '', color:'' },
+    { label:'SHORTEST', value: shortest ? fmtHours(shortest.hours) : '—', sub: shortest ? fmtDate(shortest.depDate) : '', color:'' },
+    { label:'TURN TRIPS', value: turnTrips, sub:'AFHT turns', color:'' },
+    { label:'AVG DEDUCT', value: '$'+(td/trips.length).toFixed(0), sub:'per trip', color:'color:var(--green)' },
+  ];
+  const cardsEl = document.getElementById('dataStatCards');
+  if (cardsEl) cardsEl.innerHTML = cards.map(c => `
+    <div style="background:var(--steel);border-radius:12px;padding:12px 14px;">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${c.label}</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;${c.color};line-height:1.1;margin:2px 0;">${c.value}</div>
+      <div style="font-size:11px;color:var(--muted);">${c.sub}</div>
+    </div>
+  `).join('');
+
+  // Trip type breakdown
+  const typeCount = {};
+  trips.forEach(t => { const tt = t.tripType || 'Thru Freight'; typeCount[tt] = (typeCount[tt]||0) + 1; });
+  const typeEl = document.getElementById('tripTypeBreakdown');
+  if (typeEl) typeEl.innerHTML = Object.entries(typeCount).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="flex:1;font-size:13px;color:var(--light);">${k}</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--gold);">${v}</div>
+      <div style="width:80px;height:8px;background:var(--track);border-radius:4px;overflow:hidden;">
+        <div style="width:${Math.round(v/trips.length*100)}%;height:100%;background:var(--gold);border-radius:4px;"></div>
+      </div>
+    </div>
+  `).join('');
+
+  // Role breakdown
+  const engCount = trips.filter(t => !t.role || t.role === 'engineer').length;
+  const conCount = trips.filter(t => t.role === 'conductor').length;
+  const roleEl = document.getElementById('roleBreakdown');
+  if (roleEl) roleEl.innerHTML = `
+    <div style="flex:1;background:rgba(227,24,55,0.12);border:1px solid rgba(227,24,55,0.25);border-radius:10px;padding:12px;text-align:center;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--red);">${engCount}</div>
+      <div style="font-size:11px;color:var(--muted);">as Engineer</div>
+    </div>
+    <div style="flex:1;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.2);border-radius:10px;padding:12px;text-align:center;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#38bdf8;">${conCount}</div>
+      <div style="font-size:11px;color:var(--muted);">as Conductor</div>
+    </div>
+  `;
+
+  // Crew breakdown
+  const crewCount = {};
+  trips.forEach(t => (t.coworkers||[]).forEach(cw => { if(cw) crewCount[cw] = (crewCount[cw]||0) + 1; }));
+  const crewEl = document.getElementById('crewBreakdown');
+  if (crewEl) {
+    const sorted = Object.entries(crewCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    crewEl.innerHTML = sorted.length ? sorted.map(([k,v],i) => `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-size:12px;color:var(--muted);width:16px;">${i+1}</div>
+        <div style="flex:1;font-size:13px;color:var(--light);font-weight:600;">${k}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#a855f7;">${v} trip${v!==1?'s':''}</div>
+      </div>
+    `).join('') : '<div style="color:var(--muted);font-size:13px;">No crew logged yet — enable Detailed mode to track crew.</div>';
+  }
+
+  // Train series breakdown
+  const seriesCount = {};
+  trips.forEach(t => { if(t.series) seriesCount[t.series] = (seriesCount[t.series]||0)+1; });
+  const seriesEl = document.getElementById('seriesBreakdown');
+  if (seriesEl) {
+    const sorted = Object.entries(seriesCount).sort((a,b)=>b[1]-a[1]);
+    seriesEl.innerHTML = sorted.length ? sorted.map(([k,v]) => `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="flex:1;font-size:13px;color:var(--light);font-family:monospace;">${k}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--light);">${v}</div>
+        <div style="width:80px;height:8px;background:var(--track);border-radius:4px;overflow:hidden;">
+          <div style="width:${Math.round(v/trips.length*100)}%;height:100%;background:var(--red);border-radius:4px;"></div>
+        </div>
+      </div>
+    `).join('') : '<div style="color:var(--muted);font-size:13px;">No train IDs logged yet.</div>';
+  }
+
+  // Advanced IOS/FOS stats
+  const advTrips = trips.filter(t => t.leg1TermOutH || t.leg2TermOutH);
+  const advEl = document.getElementById('advancedStats');
+  if (advEl) {
+    advEl.style.display = advTrips.length ? 'block' : 'none';
+    if (advTrips.length) {
+      const pct = Math.round(advTrips.length / trips.length * 100);
+      const avgItd = advTrips.reduce((s,t) => s + (t.leg1TermOutH||0), 0) / advTrips.length;
+      const avgFtd = advTrips.reduce((s,t) => s + (t.leg2TermInH||0), 0) / advTrips.length;
+      const avgLine1 = advTrips.reduce((s,t) => s + (t.leg1LineH||0), 0) / advTrips.length;
+      const avgLine2 = advTrips.reduce((s,t) => s + (t.leg2LineH||0), 0) / advTrips.length;
+      const termEl = document.getElementById('terminalStats');
+      if (termEl) termEl.innerHTML = [
+        { label:'AVG ITD', value: fmtHours(avgItd), sub:`Leg 1 terminal (${pct}% of trips)`, color:'color:var(--gold)' },
+        { label:'AVG FTD', value: fmtHours(avgFtd), sub:'Leg 2 terminal', color:'color:var(--gold)' },
+        { label:'AVG LINE LEG 1', value: fmtHours(avgLine1), sub:'time over road', color:'color:#38bdf8' },
+        { label:'AVG LINE LEG 2', value: fmtHours(avgLine2), sub:'time over road', color:'color:#38bdf8' },
+      ].map(c => `
+        <div style="background:var(--steel);border-radius:12px;padding:12px 14px;">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;">${c.label}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;${c.color};line-height:1.1;margin:2px 0;">${c.value}</div>
+          <div style="font-size:11px;color:var(--muted);">${c.sub}</div>
+        </div>
+      `).join('');
+
+      // Fastest trips over the road (Thru Freight with IOS/FOS, sorted by leg1LineH)
+      const fastEl = document.getElementById('fastestTrips');
+      if (fastEl) {
+        const ranked = advTrips
+          .filter(t => (!t.tripType || t.tripType === 'Thru Freight') && t.leg1LineH > 0)
+          .sort((a,b) => a.leg1LineH - b.leg1LineH).slice(0,5);
+        fastEl.innerHTML = ranked.length ? ranked.map((t,i) => `
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-size:12px;color:var(--muted);width:16px;">${i+1}</div>
+            <div style="flex:1;font-size:13px;color:var(--light);">${fmtDate(t.depDate)} · ${t.trainOut||'—'}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#38bdf8;">${fmtHours(t.leg1LineH)}</div>
+          </div>
+        `).join('') : '<div style="color:var(--muted);font-size:13px;">Log IOS/FOS on Thru Freight trips to see rankings.</div>';
+      }
+
+      // Most delayed series by avg ITD
+      const serDelayMap = {};
+      advTrips.forEach(t => {
+        if (!t.series) return;
+        if (!serDelayMap[t.series]) serDelayMap[t.series] = { total:0, count:0 };
+        serDelayMap[t.series].total += t.leg1TermOutH || 0;
+        serDelayMap[t.series].count++;
+      });
+      const delayEl = document.getElementById('seriesDelay');
+      if (delayEl) {
+        const ranked = Object.entries(serDelayMap)
+          .map(([k,v]) => ({ series:k, avg: v.total/v.count, count:v.count }))
+          .sort((a,b) => b.avg - a.avg);
+        delayEl.innerHTML = ranked.length ? ranked.map((r,i) => `
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-size:12px;color:var(--muted);width:16px;">${i+1}</div>
+            <div style="flex:1;font-size:13px;color:var(--light);font-family:monospace;">${r.series} <span style="color:var(--muted);font-size:11px;">(${r.count} trips)</span></div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--gold);">${fmtHours(r.avg)}</div>
+          </div>
+        `).join('') : '';
+      }
+    }
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
