@@ -16,29 +16,30 @@
 <style>
 :root {
   --red:   #E31837;
-  --dark:  #0a0f1a;
-  --navy:  #0d1f3c;
-  --steel: #112240;
-  --track: #1e3a5f;
+  --dark:  #080c14;
+  --navy:  #0a1628;
+  --steel: #0e1f38;
+  --track: #1a3355;
   --gold:  #f0a500;
-  --green: #1a9a5a;
-  --light: #e8edf5;
-  --muted: #6b7f99;
+  --green: #00c853;
+  --cyan:  #00d4ff;
+  --light: #e8f4f8;
+  --muted: #5a7a99;
   --sat:   env(safe-area-inset-top, 0px);
   --sab:   env(safe-area-inset-bottom, 0px);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; background: var(--dark); color: var(--light); font-family: 'Barlow', sans-serif; overflow: hidden; }
-.app { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+.app { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: var(--dark); }
 
 /* TABS */
-.tab { display: none; flex: 1; min-height: 0; overflow-y: scroll; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px calc(100px + env(safe-area-inset-bottom, 0px)); max-width: 860px; margin: 0 auto; width: 100%; }
+.tab { display: none; flex: 1; min-height: 0; overflow-y: scroll; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px calc(env(safe-area-inset-bottom, 0px) + 90px); max-width: 860px; margin: 0 auto; width: 100%; }
 .tab.active { display: block; height: 100%; }
 
 /* NAV */
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy); border-top: 1px solid var(--track); display: flex; padding-bottom: var(--sab); z-index: 100; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy); border-top: 1px solid var(--track); display: flex; padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 100; }
 .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 2px; background: none; border: none; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; cursor: pointer; gap: 2px; }
-.nav-btn.active { color: var(--gold); }
+.nav-btn.active { color: var(--cyan); }
 .nav-icon { font-size: 20px; line-height: 1; }
 
 /* HEADER */
@@ -50,7 +51,7 @@ header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; pad
 /* CARDS */
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
 .card { background: var(--steel); border: 1px solid var(--track); border-radius: 14px; padding: 14px 10px; text-align: center; }
-.card.green { border-color: var(--green); background: rgba(26,154,90,0.1); }
+.card.green { border-color: var(--cyan); background: rgba(26,154,90,0.1); }
 .card-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
 .card-value { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 800; color: var(--light); line-height: 1.1; margin: 4px 0 2px; }
 .card-sub { font-size: 10px; color: var(--muted); }
@@ -82,18 +83,18 @@ header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; pad
 
 .inline-duration { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 6px 0 4px; padding: 0 2px; }
 .inline-duration-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-.inline-duration-value { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: var(--gold); background: rgba(240,165,0,0.1); border: 1px solid rgba(240,165,0,0.25); border-radius: 8px; padding: 2px 10px; min-width: 60px; text-align: center; }
+.inline-duration-value { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: var(--cyan); background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.25); border-radius: 8px; padding: 2px 10px; min-width: 60px; text-align: center; }
 
-.bunkhouse-strip { display: flex; align-items: center; gap: 8px; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 10px; padding: 10px 14px; margin: 8px 0; }
-.bunkhouse-label { font-size: 13px; color: rgba(168,85,247,0.9); font-weight: 600; flex: 1; }
-.bunkhouse-value { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: #a855f7; }
+.bunkhouse-strip { display: flex; align-items: center; gap: 8px; background: rgba(0,212,255,0.06); border: 1px solid rgba(0,212,255,0.2); border-radius: 10px; padding: 10px 14px; margin: 8px 0; }
+.bunkhouse-label { font-size: 13px; color: var(--cyan); font-weight: 600; flex: 1; }
+.bunkhouse-value { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: var(--cyan); }
 
 .advanced-fields { display: none; margin: 6px 0; }
 .advanced-fields.visible { display: block; }
-.adv-btn { border-color: rgba(56,189,248,0.3) !important; color: #38bdf8 !important; }
-.adv-btn.set { border-color: #38bdf8 !important; color: #fff !important; }
+.adv-btn { border-color: rgba(0,212,255,0.3) !important; color: var(--cyan) !important; }
+.adv-btn.set { border-color: var(--cyan) !important; color: #fff !important; }
 .adv-duration-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 4px; }
-.adv-chip { font-size: 11px; font-weight: 600; color: #38bdf8; background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2); border-radius: 6px; padding: 4px 8px; white-space: nowrap; }
+.adv-chip { font-size: 11px; font-weight: 600; color: var(--cyan); background: rgba(0,212,255,0.06); border: 1px solid rgba(0,212,255,0.2); border-radius: 6px; padding: 4px 8px; white-space: nowrap; }
 
 /* DUTY PREVIEW */
 .duty-preview { background: var(--steel); border: 1px solid var(--track); border-radius: 14px; padding: 14px; margin: 14px 0; }
@@ -259,7 +260,7 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     <span>🛏</span>
     <span class="bunkhouse-label">Bunkhouse</span>
     <span class="bunkhouse-value" id="inlineBunkVal">—</span>
-    <button id="addTurnBtn" onclick="addTurnLeg()" style="background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.3);color:var(--gold);padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;white-space:nowrap;">＋ AFHT TURN</button>
+    <button id="addTurnBtn" onclick="addTurnLeg()" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--cyan);padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;white-space:nowrap;">＋ AFHT TURN</button>
   </div>
 
   <!-- AFHT Turn leg (hidden by default, appears between leg 1 and leg 2) -->
@@ -1930,8 +1931,8 @@ function renderDataStats() {
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--red);">${engCount}</div>
       <div style="font-size:11px;color:var(--muted);">as Engineer</div>
     </div>
-    <div style="flex:1;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.2);border-radius:10px;padding:12px;text-align:center;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#38bdf8;">${conCount}</div>
+    <div style="flex:1;background:rgba(56,189,248,0.08);border:1px solid rgba(0,212,255,0.2);border-radius:10px;padding:12px;text-align:center;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--cyan);">${conCount}</div>
       <div style="font-size:11px;color:var(--muted);">as Conductor</div>
     </div>
   `;
@@ -1983,8 +1984,8 @@ function renderDataStats() {
       if (termEl) termEl.innerHTML = [
         { label:'AVG ITD', value: fmtHours(avgItd), sub:`Leg 1 terminal (${pct}% of trips)`, color:'color:var(--gold)' },
         { label:'AVG FTD', value: fmtHours(avgFtd), sub:'Leg 2 terminal', color:'color:var(--gold)' },
-        { label:'AVG LINE LEG 1', value: fmtHours(avgLine1), sub:'time over road', color:'color:#38bdf8' },
-        { label:'AVG LINE LEG 2', value: fmtHours(avgLine2), sub:'time over road', color:'color:#38bdf8' },
+        { label:'AVG LINE LEG 1', value: fmtHours(avgLine1), sub:'time over road', color:'color:var(--cyan)' },
+        { label:'AVG LINE LEG 2', value: fmtHours(avgLine2), sub:'time over road', color:'color:var(--cyan)' },
       ].map(c => `
         <div style="background:var(--steel);border-radius:12px;padding:12px 14px;">
           <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;">${c.label}</div>
@@ -2003,7 +2004,7 @@ function renderDataStats() {
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="font-size:12px;color:var(--muted);width:16px;">${i+1}</div>
             <div style="flex:1;font-size:13px;color:var(--light);">${fmtDate(t.depDate)} · ${t.trainOut||'—'}</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#38bdf8;">${fmtHours(t.leg1LineH)}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--cyan);">${fmtHours(t.leg1LineH)}</div>
           </div>
         `).join('') : '<div style="color:var(--muted);font-size:13px;">Log IOS/FOS on Thru Freight trips to see rankings.</div>';
       }
@@ -2107,7 +2108,7 @@ function drawWrapped() {
     { label:'HOURS AWAY',      value: th.toFixed(0)+'h',                   color:'#f0a500' },
     { label:'TIME ON DUTY',    value: ton.toFixed(0)+'h',                  color:'#f0a500' },
     { label:'BUNKHOUSE',       value: tb.toFixed(0)+'h',                   color:'#a855f7' },
-    { label:'LONGEST TRIP',    value: longestH.toFixed(1)+'h',             color:'#38bdf8' },
+    { label:'LONGEST TRIP',    value: longestH.toFixed(1)+'h',             color:'var(--cyan)' },
     { label:'DEDUCTIBLE',      value: '$'+td.toFixed(0),                   color:'#1a9a5a' },
     { label:'MOST ACTIVE',     value: busyDay+' '+busyHourStr,             color:'#e8edf5' },
   ];
@@ -2514,17 +2515,17 @@ function renderGrid() {
       <td style="padding:3px;">${dateInp(row.depDate,'depDate',i)}</td>
       <td style="padding:3px;">${timeInp(row.depTime,'depTime',i)}</td>`;
     if (gridDetailed) cells += `
-      <td style="padding:3px;border-left:1px solid rgba(56,189,248,0.2);">${timeInp(row.leg1Ios,'leg1Ios',i)}</td>
+      <td style="padding:3px;border-left:1px solid rgba(0,212,255,0.2);">${timeInp(row.leg1Ios,'leg1Ios',i)}</td>
       <td style="padding:3px;">${timeInp(row.leg1Fos,'leg1Fos',i)}</td>`;
     cells += `
-      <td style="padding:3px;${gridDetailed?'border-right:1px solid rgba(56,189,248,0.2);':''}">${timeInp(row.leg1Off,'leg1Off',i)}</td>
+      <td style="padding:3px;${gridDetailed?'border-right:1px solid rgba(0,212,255,0.2);':''}">${timeInp(row.leg1Off,'leg1Off',i)}</td>
       <td style="padding:3px;">${dateInp(row.retDate,'retDate',i)}</td>
       <td style="padding:3px;">${timeInp(row.leg2On,'leg2On',i)}</td>`;
     if (gridDetailed) cells += `
-      <td style="padding:3px;border-left:1px solid rgba(56,189,248,0.2);">${timeInp(row.leg2Ios,'leg2Ios',i)}</td>
+      <td style="padding:3px;border-left:1px solid rgba(0,212,255,0.2);">${timeInp(row.leg2Ios,'leg2Ios',i)}</td>
       <td style="padding:3px;">${timeInp(row.leg2Fos,'leg2Fos',i)}</td>`;
     cells += `
-      <td style="padding:3px;${gridDetailed?'border-right:1px solid rgba(56,189,248,0.2);':''}">${timeInp(row.retTime,'retTime',i)}</td>
+      <td style="padding:3px;${gridDetailed?'border-right:1px solid rgba(0,212,255,0.2);':''}">${timeInp(row.retTime,'retTime',i)}</td>
       <td style="padding:3px;">${trainInp(row.trainOut,'trainOut',i,'Q199')}</td>
       <td style="padding:3px;">${trainInp(row.trainBack,'trainBack',i,'U752')}</td>
       <td style="padding:3px;">${typeSelect(row.tripType,i)}</td>`;
