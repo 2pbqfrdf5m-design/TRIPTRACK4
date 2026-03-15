@@ -1156,7 +1156,7 @@ function updatePreview() {
   const depDate = document.getElementById('depDate').value;
   const leg1On  = document.getElementById('depTimeBtn').dataset.val;
   const leg1Off = document.getElementById('arrDestBtn').dataset.val;
-  const retDate = document.getElementById('retDate').value;
+  let   retDate = document.getElementById('retDate').value;
   const leg2On  = document.getElementById('depDestBtn').dataset.val;
   const leg2Off = document.getElementById('retTimeBtn').dataset.val;
   const leg1Ios = document.getElementById('leg1IosBtn').dataset.val;
@@ -1165,6 +1165,18 @@ function updatePreview() {
   const leg2Fos = document.getElementById('leg2FosBtn').dataset.val;
 
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+  // Auto-advance retDate if times cross midnight
+  // If leg1Off < leg1On → trip crossed midnight, bump retDate if still same as depDate
+  if (depDate && leg1On && leg1Off && retDate === depDate) {
+    const depH = parseInt(leg1On), offH = parseInt(leg1Off);
+    if (offH < depH) {
+      const next = new Date(depDate + 'T12:00');
+      next.setDate(next.getDate() + 1);
+      retDate = next.toISOString().split('T')[0];
+      document.getElementById('retDate').value = retDate;
+    }
+  }
 
   // Leg 1 duration — needs depDate + leg1On + leg1Off
   if (depDate && leg1On && leg1Off) {
@@ -1178,11 +1190,15 @@ function updatePreview() {
     // IOS/FOS chips for leg 1
     if (leg1Ios && leg1Fos) {
       const dep2   = new Date(depDate + 'T' + leg1On);
-      const l1ios  = new Date(depDate + 'T' + leg1Ios);
-      const l1fos  = new Date(depDate + 'T' + leg1Fos);
-      set('leg1TermOut', '🏭 Terminal out: ' + (fmtHours((l1ios - dep2) / 3600000)));
+      let l1ios  = new Date(depDate + 'T' + leg1Ios);
+      let l1fos  = new Date(depDate + 'T' + leg1Fos);
+      // Midnight crossover — IOS/FOS after midnight
+      if (l1ios <= dep2) l1ios = new Date(l1ios.getTime() + 86400000);
+      if (l1fos <= dep2) l1fos = new Date(l1fos.getTime() + 86400000);
+      if (l1fos <= l1ios) l1fos = new Date(l1fos.getTime() + 86400000);
+      set('leg1TermOut', '🏭 Terminal out: ' + fmtHours((l1ios - dep2) / 3600000));
       set('leg1Line',    '🛤 Line: '          + fmtHours((l1fos - l1ios) / 3600000));
-      set('leg1TermIn',  '🏭 Terminal in: '  + (fmtHours((l1off - l1fos) / 3600000)));
+      set('leg1TermIn',  '🏭 Terminal in: '  + fmtHours((l1off - l1fos) / 3600000));
     }
   }
 
@@ -1207,11 +1223,16 @@ function updatePreview() {
 
     // IOS/FOS chips for leg 2
     if (leg2Ios && leg2Fos) {
-      const l2ios = new Date(retDate + 'T' + leg2Ios);
-      const l2fos = new Date(retDate + 'T' + leg2Fos);
-      set('leg2TermOut', '🏭 Terminal out: ' + (fmtHours((l2ios - l2on) / 3600000)));
-      set('leg2Line',    '🛤 Line: '          + (fmtHours((l2fos - l2ios) / 3600000)));
-      set('leg2TermIn',  '🏭 Terminal in: '  + (fmtHours((ret - l2fos) / 3600000)));
+      let l2ios = new Date(retDate + 'T' + leg2Ios);
+      let l2fos = new Date(retDate + 'T' + leg2Fos);
+      const l2on2 = new Date(retDate + 'T' + leg2On);
+      // Midnight crossover
+      if (l2ios <= l2on2) l2ios = new Date(l2ios.getTime() + 86400000);
+      if (l2fos <= l2on2) l2fos = new Date(l2fos.getTime() + 86400000);
+      if (l2fos <= l2ios) l2fos = new Date(l2fos.getTime() + 86400000);
+      set('leg2TermOut', '🏭 Terminal out: ' + fmtHours((l2ios - l2on2) / 3600000));
+      set('leg2Line',    '🛤 Line: '          + fmtHours((l2fos - l2ios) / 3600000));
+      set('leg2TermIn',  '🏭 Terminal in: '  + fmtHours((ret - l2fos) / 3600000));
     }
   }
 
@@ -1369,8 +1390,11 @@ function saveTrip() {
   if (leg1Off && leg1Ios && leg1Fos) {
     let l1off = new Date(depDate + 'T' + leg1Off);
     if (l1off <= dep) l1off.setDate(l1off.getDate() + 1);
-    const l1ios = new Date(depDate + 'T' + leg1Ios);
-    const l1fos = new Date(depDate + 'T' + leg1Fos);
+    let l1ios = new Date(depDate + 'T' + leg1Ios);
+    let l1fos = new Date(depDate + 'T' + leg1Fos);
+    if (l1ios <= dep) l1ios = new Date(l1ios.getTime() + 86400000);
+    if (l1fos <= dep) l1fos = new Date(l1fos.getTime() + 86400000);
+    if (l1fos <= l1ios) l1fos = new Date(l1fos.getTime() + 86400000);
     leg1TermOutH = Math.max(0, (l1ios - dep) / 3600000);
     leg1LineH    = Math.max(0, (l1fos - l1ios) / 3600000);
     leg1TermInH  = Math.max(0, (l1off - l1fos) / 3600000);
@@ -1380,9 +1404,12 @@ function saveTrip() {
   let leg2TermOutH = 0, leg2LineH = 0, leg2TermInH = 0;
   if (leg2On && leg2Ios && leg2Fos) {
     const l2on  = new Date(retDate + 'T' + leg2On);
-    const l2ios = new Date(retDate + 'T' + leg2Ios);
-    const l2fos = new Date(retDate + 'T' + leg2Fos);
+    let l2ios = new Date(retDate + 'T' + leg2Ios);
+    let l2fos = new Date(retDate + 'T' + leg2Fos);
     const l2off = new Date(retDate + 'T' + leg2Off);
+    if (l2ios <= l2on) l2ios = new Date(l2ios.getTime() + 86400000);
+    if (l2fos <= l2on) l2fos = new Date(l2fos.getTime() + 86400000);
+    if (l2fos <= l2ios) l2fos = new Date(l2fos.getTime() + 86400000);
     leg2TermOutH = Math.max(0, (l2ios - l2on) / 3600000);
     leg2LineH    = Math.max(0, (l2fos - l2ios) / 3600000);
     leg2TermInH  = Math.max(0, (l2off - l2fos) / 3600000);
