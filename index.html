@@ -2487,14 +2487,14 @@ function renderGrid() {
   if (!head || !tbody) return;
 
   // Build headers
-  const basicCols = ['#','Date Out','On Duty','Leg1 Off','Date Back','Leg2 On','Off Duty','Train Out','Train Back','Type'];
-  const detailCols = [...basicCols, 'L1 IOS','L1 FOS','L2 IOS','L2 FOS','Crew','Notes'];
+  const basicCols  = ['#','Date Out','On Duty','Leg1 Off','Date Back','Leg2 On','Off Duty','Train Out','Train Back','Type'];
+  const detailCols = ['#','Date Out','On Duty','L1 IOS','L1 FOS','Leg1 Off','Date Back','Leg2 On','L2 IOS','L2 FOS','Off Duty','Train Out','Train Back','Type','Crew','Notes'];
   const cols = gridDetailed ? detailCols : basicCols;
   head.innerHTML = `<tr>${cols.map(c => `<th style="${thStyle}">${c}</th>`).join('')}<th style="padding:8px 4px;width:24px;background:var(--navy);"></th></tr>`;
 
   // Build rows
-  const inp = (val, field, i, ph='', w='90px', extra='') =>
-    `<input type="text" value="${val}" placeholder="${ph}" oninput="gridData[${i}].${field}=this.value;highlightGridRow(${i})${extra}" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 6px;border-radius:6px;font-size:13px;width:${w};">`;
+  const inp = (val, field, i, ph='', w='90px') =>
+    `<input type="text" value="${val}" placeholder="${ph}" oninput="gridData[${i}].${field}=this.value;highlightGridRow(${i})" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 6px;border-radius:6px;font-size:13px;width:${w};">`;
   const dateInp = (val, field, i) =>
     `<input type="date" value="${val}" oninput="gridData[${i}].${field}=this.value;autoFillGridRetDate(${i});highlightGridRow(${i})" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 6px;border-radius:6px;font-size:13px;width:130px;">`;
   const timeInp = (val, field, i) =>
@@ -2512,20 +2512,24 @@ function renderGrid() {
     let cells = `
       <td style="padding:4px 6px;color:var(--muted);font-size:11px;text-align:center;">${i+1}</td>
       <td style="padding:3px;">${dateInp(row.depDate,'depDate',i)}</td>
-      <td style="padding:3px;">${timeInp(row.depTime,'depTime',i)}</td>
-      <td style="padding:3px;">${timeInp(row.leg1Off,'leg1Off',i)}</td>
+      <td style="padding:3px;">${timeInp(row.depTime,'depTime',i)}</td>`;
+    if (gridDetailed) cells += `
+      <td style="padding:3px;border-left:1px solid rgba(56,189,248,0.2);">${timeInp(row.leg1Ios,'leg1Ios',i)}</td>
+      <td style="padding:3px;">${timeInp(row.leg1Fos,'leg1Fos',i)}</td>`;
+    cells += `
+      <td style="padding:3px;${gridDetailed?'border-right:1px solid rgba(56,189,248,0.2);':''}">${timeInp(row.leg1Off,'leg1Off',i)}</td>
       <td style="padding:3px;">${dateInp(row.retDate,'retDate',i)}</td>
-      <td style="padding:3px;">${timeInp(row.leg2On,'leg2On',i)}</td>
-      <td style="padding:3px;">${timeInp(row.retTime,'retTime',i)}</td>
+      <td style="padding:3px;">${timeInp(row.leg2On,'leg2On',i)}</td>`;
+    if (gridDetailed) cells += `
+      <td style="padding:3px;border-left:1px solid rgba(56,189,248,0.2);">${timeInp(row.leg2Ios,'leg2Ios',i)}</td>
+      <td style="padding:3px;">${timeInp(row.leg2Fos,'leg2Fos',i)}</td>`;
+    cells += `
+      <td style="padding:3px;${gridDetailed?'border-right:1px solid rgba(56,189,248,0.2);':''}">${timeInp(row.retTime,'retTime',i)}</td>
       <td style="padding:3px;">${trainInp(row.trainOut,'trainOut',i,'Q199')}</td>
       <td style="padding:3px;">${trainInp(row.trainBack,'trainBack',i,'U752')}</td>
       <td style="padding:3px;">${typeSelect(row.tripType,i)}</td>`;
     if (gridDetailed) cells += `
-      <td style="padding:3px;">${timeInp(row.leg1Ios,'leg1Ios',i)}</td>
-      <td style="padding:3px;">${timeInp(row.leg1Fos,'leg1Fos',i)}</td>
-      <td style="padding:3px;">${timeInp(row.leg2Ios,'leg2Ios',i)}</td>
-      <td style="padding:3px;">${timeInp(row.leg2Fos,'leg2Fos',i)}</td>
-      <td style="padding:3px;">${inp(row.crew,'crew',i,'Crew name','110px')}</td>
+      <td style="padding:3px;">${inp(row.crew,'crew',i,'Crew','110px')}</td>
       <td style="padding:3px;">${inp(row.notes,'notes',i,'Notes','120px')}</td>`;
     cells += `<td style="padding:3px;"><button onclick="clearGridRow(${i})" style="background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px;">✕</button></td>`;
     return `<tr id="gr-${i}" style="${bg}">${cells}</tr>`;
