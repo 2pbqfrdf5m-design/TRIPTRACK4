@@ -28,13 +28,12 @@
   --sab:   env(safe-area-inset-bottom, 0px);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html { height: 100%; background: var(--dark); }
-body { height: 100%; background: var(--dark); color: var(--light); font-family: 'Barlow', sans-serif; overflow: hidden; }
-.app { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+html, body { height: 100%; background: var(--dark); color: var(--light); font-family: 'Barlow', sans-serif; overflow: hidden; }
+.app { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 
 /* TABS */
-.tab { display: none; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px calc(100px + env(safe-area-inset-bottom, 0px)); max-width: 860px; margin: 0 auto; width: 100%; }
-.tab.active { display: block; }
+.tab { display: none; flex: 1; min-height: 0; overflow-y: scroll; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px calc(100px + env(safe-area-inset-bottom, 0px)); max-width: 860px; margin: 0 auto; width: 100%; }
+.tab.active { display: block; height: 100%; }
 
 /* NAV */
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy); border-top: 1px solid var(--track); display: flex; padding-bottom: var(--sab); z-index: 100; }
@@ -576,23 +575,18 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
     <div class="cn-logo" style="background:var(--track);">📝</div>
     <div class="header-text"><h1>Grid Entry</h1><p>Bulk entry — keyboard friendly</p></div>
   </header>
-  <div style="color:var(--muted);font-size:13px;margin-bottom:14px;">Enter multiple trips fast. Tab between cells, fill what you have. Empty rows are skipped on import.</div>
+
+  <!-- Basic / Detailed toggle -->
+  <div style="display:flex;align-items:center;gap:10px;background:var(--steel);border-radius:10px;padding:10px 14px;margin-bottom:14px;">
+    <span style="font-size:12px;color:var(--muted);font-weight:600;letter-spacing:0.5px;text-transform:uppercase;flex:1;">Detailed Grid</span>
+    <div id="gridDetailToggle" onclick="toggleGridDetail()" style="width:42px;height:24px;border-radius:12px;background:var(--track);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;">
+      <div id="gridDetailThumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:9px;background:#fff;transition:transform 0.2s;"></div>
+    </div>
+  </div>
 
   <div style="overflow-x:auto;margin-bottom:12px;-webkit-overflow-scrolling:touch;">
-    <table style="width:100%;border-collapse:collapse;min-width:600px;font-size:13px;">
-      <thead>
-        <tr style="background:var(--navy);">
-          <th style="padding:8px 6px;color:var(--muted);font-weight:700;font-size:10px;letter-spacing:0.8px;text-transform:uppercase;text-align:left;white-space:nowrap;">#</th>
-          <th style="padding:8px 6px;color:var(--muted);font-weight:700;font-size:10px;letter-spacing:0.8px;text-transform:uppercase;text-align:left;white-space:nowrap;">Date Out</th>
-          <th style="padding:8px 6px;color:var(--muted);font-weight:700;font-size:10px;letter-spacing:0.8px;text-transform:uppercase;text-align:left;white-space:nowrap;">Time Out</th>
-          <th style="padding:8px 6px;color:var(--muted);font-weight:700;font-size:10px;letter-spacing:0.8px;text-transform:uppercase;text-align:left;white-space:nowrap;">Date Back</th>
-          <th style="padding:8px 6px;color:var(--muted);font-weight:700;font-size:10px;letter-spacing:0.8px;text-transform:uppercase;text-align:left;white-space:nowrap;">Time Back</th>
-          <th style="padding:8px 6px;color:var(--muted);font-weight:700;font-size:10px;letter-spacing:0.8px;text-transform:uppercase;text-align:left;white-space:nowrap;">Train Out</th>
-          <th style="padding:8px 6px;color:var(--muted);font-weight:700;font-size:10px;letter-spacing:0.8px;text-transform:uppercase;text-align:left;white-space:nowrap;">Train Back</th>
-          <th style="padding:8px 6px;color:var(--muted);font-weight:700;font-size:10px;letter-spacing:0.8px;text-transform:uppercase;text-align:left;white-space:nowrap;">Type</th>
-          <th style="padding:8px 4px;width:24px;"></th>
-        </tr>
-      </thead>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;" id="gridTable">
+      <thead id="gridHead"></thead>
       <tbody id="gridBody"></tbody>
     </table>
   </div>
@@ -2470,30 +2464,71 @@ function importCSVPaste() {
 // ══════════════════════════════════════════════════════════════════
 // GRID ENTRY
 // ══════════════════════════════════════════════════════════════════
-const GRID_COLS = ['depDate','depTime','retDate','retTime','trainOut','trainBack','tripType'];
-let gridData = Array.from({length:10}, () => ({depDate:'',depTime:'',retDate:'',retTime:'',trainOut:'',trainBack:'',tripType:''}));
+let gridDetailed = false;
+let gridData = Array.from({length:10}, () => ({
+  depDate:'', depTime:'', leg1Off:'', retDate:'', leg2On:'', retTime:'',
+  trainOut:'', trainBack:'', tripType:'',
+  leg1Ios:'', leg1Fos:'', leg2Ios:'', leg2Fos:'',
+  crew:'', notes:''
+}));
+
+function toggleGridDetail() {
+  gridDetailed = !gridDetailed;
+  document.getElementById('gridDetailToggle').style.background = gridDetailed ? 'var(--red)' : 'var(--track)';
+  document.getElementById('gridDetailThumb').style.transform = gridDetailed ? 'translateX(18px)' : 'translateX(0)';
+  renderGrid();
+}
+
+const thStyle = 'padding:8px 6px;color:var(--muted);font-weight:700;font-size:10px;letter-spacing:0.8px;text-transform:uppercase;text-align:left;white-space:nowrap;background:var(--navy);';
 
 function renderGrid() {
+  const head = document.getElementById('gridHead');
   const tbody = document.getElementById('gridBody');
-  if (!tbody) return;
+  if (!head || !tbody) return;
+
+  // Build headers
+  const basicCols = ['#','Date Out','On Duty','Leg1 Off','Date Back','Leg2 On','Off Duty','Train Out','Train Back','Type'];
+  const detailCols = [...basicCols, 'L1 IOS','L1 FOS','L2 IOS','L2 FOS','Crew','Notes'];
+  const cols = gridDetailed ? detailCols : basicCols;
+  head.innerHTML = `<tr>${cols.map(c => `<th style="${thStyle}">${c}</th>`).join('')}<th style="padding:8px 4px;width:24px;background:var(--navy);"></th></tr>`;
+
+  // Build rows
+  const inp = (val, field, i, ph='', w='90px', extra='') =>
+    `<input type="text" value="${val}" placeholder="${ph}" oninput="gridData[${i}].${field}=this.value;highlightGridRow(${i})${extra}" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 6px;border-radius:6px;font-size:13px;width:${w};">`;
+  const dateInp = (val, field, i) =>
+    `<input type="date" value="${val}" oninput="gridData[${i}].${field}=this.value;autoFillGridRetDate(${i});highlightGridRow(${i})" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 6px;border-radius:6px;font-size:13px;width:130px;">`;
+  const timeInp = (val, field, i) =>
+    `<input type="time" value="${val}" oninput="gridData[${i}].${field}=this.value;highlightGridRow(${i})" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 6px;border-radius:6px;font-size:13px;width:105px;">`;
+  const trainInp = (val, field, i, ph) =>
+    `<input type="text" value="${val}" placeholder="${ph}" oninput="gridData[${i}].${field}=this.value.toUpperCase();this.value=this.value.toUpperCase();highlightGridRow(${i})" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 6px;border-radius:6px;font-size:13px;width:75px;font-family:monospace;">`;
+  const typeSelect = (val, i) =>
+    `<select oninput="gridData[${i}].tripType=this.value" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 4px;border-radius:6px;font-size:12px;width:90px;">
+      ${tripTypes.map(t => `<option value="${t}" ${t===(val||tripTypes[0])?'selected':''}>${t}</option>`).join('')}
+    </select>`;
+
   tbody.innerHTML = gridData.map((row, i) => {
     const filled = row.depDate || row.depTime || row.retDate || row.retTime || row.trainOut;
     const bg = filled ? 'background:rgba(26,154,90,0.06);' : '';
-    return `<tr id="gr-${i}" style="${bg}">
+    let cells = `
       <td style="padding:4px 6px;color:var(--muted);font-size:11px;text-align:center;">${i+1}</td>
-      <td style="padding:3px;"><input type="date" value="${row.depDate}" oninput="gridData[${i}].depDate=this.value;autoFillGridRetDate(${i});highlightGridRow(${i})" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 6px;border-radius:6px;font-size:13px;width:130px;"></td>
-      <td style="padding:3px;"><input type="time" value="${row.depTime}" oninput="gridData[${i}].depTime=this.value;highlightGridRow(${i})" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 6px;border-radius:6px;font-size:13px;width:100px;"></td>
-      <td style="padding:3px;"><input type="date" value="${row.retDate}" oninput="gridData[${i}].retDate=this.value;highlightGridRow(${i})" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 6px;border-radius:6px;font-size:13px;width:130px;"></td>
-      <td style="padding:3px;"><input type="time" value="${row.retTime}" oninput="gridData[${i}].retTime=this.value;highlightGridRow(${i})" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 6px;border-radius:6px;font-size:13px;width:100px;"></td>
-      <td style="padding:3px;"><input type="text" value="${row.trainOut}" placeholder="Q199" oninput="gridData[${i}].trainOut=this.value.toUpperCase();this.value=this.value.toUpperCase();highlightGridRow(${i})" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 6px;border-radius:6px;font-size:13px;width:75px;font-family:monospace;"></td>
-      <td style="padding:3px;"><input type="text" value="${row.trainBack}" placeholder="U752" oninput="gridData[${i}].trainBack=this.value.toUpperCase();this.value=this.value.toUpperCase();highlightGridRow(${i})" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 6px;border-radius:6px;font-size:13px;width:75px;font-family:monospace;"></td>
-      <td style="padding:3px;">
-        <select oninput="gridData[${i}].tripType=this.value" style="background:var(--steel);border:1px solid var(--track);color:var(--light);padding:7px 4px;border-radius:6px;font-size:12px;width:90px;">
-          ${tripTypes.map(t => `<option value="${t}" ${t===(row.tripType||tripTypes[0])?'selected':''}>${t}</option>`).join('')}
-        </select>
-      </td>
-      <td style="padding:3px;"><button onclick="clearGridRow(${i})" style="background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px;">✕</button></td>
-    </tr>`;
+      <td style="padding:3px;">${dateInp(row.depDate,'depDate',i)}</td>
+      <td style="padding:3px;">${timeInp(row.depTime,'depTime',i)}</td>
+      <td style="padding:3px;">${timeInp(row.leg1Off,'leg1Off',i)}</td>
+      <td style="padding:3px;">${dateInp(row.retDate,'retDate',i)}</td>
+      <td style="padding:3px;">${timeInp(row.leg2On,'leg2On',i)}</td>
+      <td style="padding:3px;">${timeInp(row.retTime,'retTime',i)}</td>
+      <td style="padding:3px;">${trainInp(row.trainOut,'trainOut',i,'Q199')}</td>
+      <td style="padding:3px;">${trainInp(row.trainBack,'trainBack',i,'U752')}</td>
+      <td style="padding:3px;">${typeSelect(row.tripType,i)}</td>`;
+    if (gridDetailed) cells += `
+      <td style="padding:3px;">${timeInp(row.leg1Ios,'leg1Ios',i)}</td>
+      <td style="padding:3px;">${timeInp(row.leg1Fos,'leg1Fos',i)}</td>
+      <td style="padding:3px;">${timeInp(row.leg2Ios,'leg2Ios',i)}</td>
+      <td style="padding:3px;">${timeInp(row.leg2Fos,'leg2Fos',i)}</td>
+      <td style="padding:3px;">${inp(row.crew,'crew',i,'Crew name','110px')}</td>
+      <td style="padding:3px;">${inp(row.notes,'notes',i,'Notes','120px')}</td>`;
+    cells += `<td style="padding:3px;"><button onclick="clearGridRow(${i})" style="background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px;">✕</button></td>`;
+    return `<tr id="gr-${i}" style="${bg}">${cells}</tr>`;
   }).join('');
 }
 
@@ -2511,18 +2546,18 @@ function autoFillGridRetDate(i) {
 }
 
 function clearGridRow(i) {
-  gridData[i] = {depDate:'',depTime:'',retDate:'',retTime:'',trainOut:'',trainBack:'',tripType:''};
+  gridData[i] = {depDate:'',depTime:'',leg1Off:'',retDate:'',leg2On:'',retTime:'',trainOut:'',trainBack:'',tripType:'',leg1Ios:'',leg1Fos:'',leg2Ios:'',leg2Fos:'',crew:'',notes:''};
   renderGrid();
 }
 
 function addGridRow() {
-  gridData.push({depDate:'',depTime:'',retDate:'',retTime:'',trainOut:'',trainBack:'',tripType:''});
+  gridData.push({depDate:'',depTime:'',leg1Off:'',retDate:'',leg2On:'',retTime:'',trainOut:'',trainBack:'',tripType:'',leg1Ios:'',leg1Fos:'',leg2Ios:'',leg2Fos:'',crew:'',notes:''});
   renderGrid();
 }
 
 function clearGrid() {
   if (!confirm('Clear all grid rows?')) return;
-  gridData = Array.from({length:10}, () => ({depDate:'',depTime:'',retDate:'',retTime:'',trainOut:'',trainBack:'',tripType:''}));
+  gridData = Array.from({length:10}, () => ({depDate:'',depTime:'',leg1Off:'',retDate:'',leg2On:'',retTime:'',trainOut:'',trainBack:'',tripType:'',leg1Ios:'',leg1Fos:'',leg2Ios:'',leg2Fos:'',crew:'',notes:''}));
   renderGrid();
 }
 
@@ -2541,29 +2576,60 @@ function importGrid() {
     const meals  = calcMeals(hours);
     const gross  = meals * cfg.rate;
     const deduct = gross * (cfg.deduct / 100);
+
+    // Leg durations
+    let leg1h = 0, leg2h = 0, bunkhouseH = 0;
+    if (r.leg1Off) {
+      let l1off = new Date(r.depDate + 'T' + r.leg1Off);
+      if (l1off <= dep) l1off = new Date(l1off.getTime() + 86400000);
+      leg1h = Math.max(0, (l1off - dep) / 3600000);
+      if (r.leg2On) {
+        const l2on = new Date(r.retDate + 'T' + r.leg2On);
+        bunkhouseH = Math.max(0, (l2on - l1off) / 3600000);
+      }
+    }
+    if (r.leg2On) {
+      const l2on = new Date(r.retDate + 'T' + r.leg2On);
+      leg2h = Math.max(0, (ret - l2on) / 3600000);
+    }
+
+    // Save any new crew names
+    const crewList = r.crew ? r.crew.split(';').map(s=>s.trim()).filter(Boolean) : [];
+    crewList.forEach(cw => {
+      const list = loadCoworkers();
+      if (!list.includes(cw)) { list.push(cw); saveCoworkers(list); }
+    });
+
     const trip = {
       id: Date.now() + Math.random(),
       depDate:r.depDate, depTime:r.depTime,
+      leg1OffTime:r.leg1Off||'', leg2OnTime:r.leg2On||'',
       retDate:r.retDate, retTime:r.retTime,
-      leg1OffTime:'', leg2OnTime:'',
       origin: cfg.homeTerminal || '',
       dest: routes[0] ? routes[0].name : '',
       routeId: routes[0] ? routes[0].id : '',
       miles: routes[0] ? routes[0].miles : null,
-      trainOut: r.trainOut || '', trainBack: r.trainBack || '',
-      series: getTrainSeries(r.trainOut || ''),
+      trainOut: (r.trainOut||'').toUpperCase(),
+      trainBack: (r.trainBack||'').toUpperCase(),
+      series: getTrainSeries(r.trainOut||''),
       tripType: r.tripType || tripTypes[0],
       role: cfg.defaultRole || 'engineer',
-      coworkers: [], notes: '',
+      coworkers: crewList, notes: r.notes||'',
+      leg1Ios:r.leg1Ios||'', leg1Fos:r.leg1Fos||'',
+      leg2Ios:r.leg2Ios||'', leg2Fos:r.leg2Fos||'',
       hours, meals, gross, deduct,
       rate: cfg.rate, deductPct: cfg.deduct,
-      leg1h:0, leg2h:0, bunkhouseH:0, onDutyH:0
+      leg1h, leg2h, bunkhouseH, onDutyH: leg1h + leg2h
     };
     yt.push(trip);
     saveTripsForYear(yr, yt);
     if (yr === activeYear) trips = yt;
     added++;
   });
+
+  coworkers = loadCoworkers();
+  renderCoworkerManager();
+  renderCoworkerDropdowns();
   clearGrid();
   renderTrips();
   let msg = `Imported ${added} trip${added!==1?'s':''}`;
