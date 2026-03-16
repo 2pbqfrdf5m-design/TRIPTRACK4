@@ -1202,15 +1202,28 @@ function updatePreview() {
     }
   }
 
-  // Bunkhouse — needs leg1Off + leg2On
-  if (depDate && leg1On && leg1Off && retDate && leg2On) {
+  // Bunkhouse 1 — Leg 1 off → next on duty (AFHT on if turn, else Leg 2 on)
+  if (depDate && leg1On && leg1Off) {
     const dep  = new Date(depDate + 'T' + leg1On);
     let l1off  = new Date(depDate + 'T' + leg1Off);
     if (l1off <= dep) l1off = new Date(l1off.getTime() + 86400000);
-    const l2on = new Date(retDate + 'T' + leg2On);
-    const bunk = (l2on - l1off) / 3600000;
-    set('prevBunk',      bunk > 0 ? fmtHours(bunk) : '—');
-    set('inlineBunkVal', bunk > 0 ? fmtHours(bunk) : '—');
+
+    if (hasTurnLeg) {
+      // Bunkhouse 1 = Leg 1 off → AFHT on (leg3On/leg3Date)
+      const leg3Date = document.getElementById('leg3Date').value;
+      const leg3On   = document.getElementById('leg3OnBtn').dataset.val;
+      if (leg3On && leg3Date) {
+        const afhtOn = new Date(leg3Date + 'T' + leg3On);
+        const bunk = (afhtOn - l1off) / 3600000;
+        set('prevBunk',      bunk > 0 ? fmtHours(bunk) : '—');
+        set('inlineBunkVal', bunk > 0 ? fmtHours(bunk) : '—');
+      }
+    } else if (retDate && leg2On) {
+      const l2on = new Date(retDate + 'T' + leg2On);
+      const bunk = (l2on - l1off) / 3600000;
+      set('prevBunk',      bunk > 0 ? fmtHours(bunk) : '—');
+      set('inlineBunkVal', bunk > 0 ? fmtHours(bunk) : '—');
+    }
   }
 
   // Leg 2 duration — needs retDate + leg2On + leg2Off
@@ -1245,27 +1258,40 @@ function updatePreview() {
       const leg3Date = document.getElementById('leg3Date').value;
       const leg3Off  = document.getElementById('leg3OffBtn').dataset.val;
       const leg3On   = document.getElementById('leg3OnBtn').dataset.val;
+      const leg3Ios  = document.getElementById('leg3IosBtn').dataset.val;
+      const leg3Fos  = document.getElementById('leg3FosBtn').dataset.val;
 
-      // Bunkhouse 2: Leg 2 off → Leg 3 on
-      if (leg3On && leg3Date) {
-        const l2off = new Date(retDate + 'T' + leg2Off);
-        const l3on  = new Date(leg3Date + 'T' + leg3On);
-        const bunk2 = (l3on - l2off) / 3600000;
-        set('prevBunk2',     bunk2 > 0 ? fmtHours(bunk2) : '—');
-        set('inlineBunk2Val', bunk2 > 0 ? fmtHours(bunk2) : '—');
-      }
-
-      // Leg 3 duration
+      // AFHT on duty duration (leg3On → leg3Off, same date)
       if (leg3On && leg3Date && leg3Off) {
         const l3on  = new Date(leg3Date + 'T' + leg3On);
         const l3off = new Date(leg3Date + 'T' + leg3Off);
         const l3h   = (l3off - l3on) / 3600000;
         set('prevLeg3',      l3h > 0 ? fmtHours(l3h) : '—');
         set('inlineLeg3Val', l3h > 0 ? fmtHours(l3h) : '—');
-        endTime = leg3Off; endDate = leg3Date;
-      } else {
-        endTime = leg2Off; endDate = retDate;
+
+        // AFHT IOS/FOS chips
+        if (leg3Ios && leg3Fos) {
+          let l3ios = new Date(leg3Date + 'T' + leg3Ios);
+          let l3fos = new Date(leg3Date + 'T' + leg3Fos);
+          if (l3ios <= l3on) l3ios = new Date(l3ios.getTime() + 86400000);
+          if (l3fos <= l3on) l3fos = new Date(l3fos.getTime() + 86400000);
+          if (l3fos <= l3ios) l3fos = new Date(l3fos.getTime() + 86400000);
+          set('leg3TermOut', '🏭 Terminal out: ' + fmtHours((l3ios - l3on) / 3600000));
+          set('leg3Line',    '🛤 Line: '          + fmtHours((l3fos - l3ios) / 3600000));
+          set('leg3TermIn',  '🏭 Terminal in: '  + fmtHours((l3off - l3fos) / 3600000));
+        }
+
+        // Bunkhouse 2 = AFHT off → Leg 2 on
+        if (leg2On) {
+          const l2on  = new Date(retDate + 'T' + leg2On);
+          const bunk2 = (l2on - l3off) / 3600000;
+          set('prevBunk2',      bunk2 > 0 ? fmtHours(bunk2) : '—');
+          set('inlineBunk2Val', bunk2 > 0 ? fmtHours(bunk2) : '—');
+        }
       }
+
+      // Total = dep → Leg 2 off duty (retDate)
+      endTime = leg2Off; endDate = retDate;
     } else {
       endTime = leg2Off; endDate = retDate;
     }
@@ -1310,20 +1336,24 @@ function saveTrip() {
     leg1h = Math.max(0, (l1off - dep) / 3600000);
   }
 
-  // Leg 2 duration
+  // Leg 2 duration (return home leg)
   let leg2h = 0;
   if (leg2On) {
     const l2on = new Date(retDate + 'T' + leg2On);
     leg2h = Math.max(0, (ret - l2on) / 3600000);
   }
 
-  // Bunkhouse = gap between Leg 1 off duty and Leg 2 on duty
+  // Bunkhouse 1 = Leg 1 off → AFHT on (if turn) or Leg 2 on (if no turn)
   let bunkhouseH = 0;
-  if (leg1Off && leg2On) {
+  if (leg1Off) {
     let l1off = new Date(depDate + 'T' + leg1Off);
-    const l2on  = new Date(retDate + 'T' + leg2On);
     if (l1off <= dep) l1off.setDate(l1off.getDate() + 1);
-    bunkhouseH = Math.max(0, (l2on - l1off) / 3600000);
+    if (hasTurnLeg) {
+      // Will be set below after we read leg3 values
+    } else if (leg2On) {
+      const l2on = new Date(retDate + 'T' + leg2On);
+      bunkhouseH = Math.max(0, (l2on - l1off) / 3600000);
+    }
   }
 
   // Trip type per leg
@@ -1336,7 +1366,7 @@ function saveTrip() {
   cfg.lastTripType = tripType;
   saveCfg();
 
-  // Leg 3 (turn)
+  // AFHT Turn leg (middle leg)
   let leg3Date='', leg3On='', leg3Off='', leg3h=0, bunkhouse2H=0, trainLeg3='';
   let leg3Ios='', leg3Fos='', leg3TermOutH=0, leg3LineH=0, leg3TermInH=0;
   if (hasTurnLeg) {
@@ -1350,13 +1380,27 @@ function saveTrip() {
       const l3on  = new Date(leg3Date + 'T' + leg3On);
       const l3off = new Date(leg3Date + 'T' + leg3Off);
       leg3h = Math.max(0, (l3off - l3on) / 3600000);
-      // Bunkhouse 2: Leg 2 off → Leg 3 on
-      const l2off2 = new Date(retDate + 'T' + leg2Off);
-      bunkhouse2H = Math.max(0, (l3on - l2off2) / 3600000);
-      // IOS/FOS leg 3
+
+      // Bunkhouse 1 = Leg 1 off → AFHT on
+      if (leg1Off) {
+        let l1off = new Date(depDate + 'T' + leg1Off);
+        if (l1off <= dep) l1off.setDate(l1off.getDate() + 1);
+        bunkhouseH = Math.max(0, (l3on - l1off) / 3600000);
+      }
+
+      // Bunkhouse 2 = AFHT off → Leg 2 on
+      if (leg2On) {
+        const l2on = new Date(retDate + 'T' + leg2On);
+        bunkhouse2H = Math.max(0, (l2on - l3off) / 3600000);
+      }
+
+      // IOS/FOS for AFHT leg with midnight crossover
       if (leg3Ios && leg3Fos) {
-        const l3ios = new Date(leg3Date + 'T' + leg3Ios);
-        const l3fos = new Date(leg3Date + 'T' + leg3Fos);
+        let l3ios = new Date(leg3Date + 'T' + leg3Ios);
+        let l3fos = new Date(leg3Date + 'T' + leg3Fos);
+        if (l3ios <= l3on) l3ios = new Date(l3ios.getTime() + 86400000);
+        if (l3fos <= l3on) l3fos = new Date(l3fos.getTime() + 86400000);
+        if (l3fos <= l3ios) l3fos = new Date(l3fos.getTime() + 86400000);
         leg3TermOutH = Math.max(0, (l3ios - l3on) / 3600000);
         leg3LineH    = Math.max(0, (l3fos - l3ios) / 3600000);
         leg3TermInH  = Math.max(0, (l3off - l3fos) / 3600000);
@@ -1364,11 +1408,8 @@ function saveTrip() {
     }
   }
 
-  // Recalc total hours including leg 3
-  const finalEnd = hasTurnLeg && leg3Date && leg3Off
-    ? new Date(leg3Date + 'T' + leg3Off)
-    : ret;
-  const totalHours = (finalEnd - dep) / 3600000;
+  // Total hours = Leg 1 on duty → Leg 2 off duty (full span)
+  const totalHours = (ret - dep) / 3600000;
 
   const onDutyH = leg1h + leg2h + leg3h;
   const meals   = calcMeals(totalHours);
@@ -2192,7 +2233,7 @@ function exportSummary() {
   const text = `TRIP TRACKER — TL2 MEAL EXPENSE SUMMARY
 Tax Year: ${activeYear}
 Period: ${fmtDate(first.depDate)} – ${fmtDate(last.retDate)}
-Route: ${cfg.origin} ↔ ${cfg.dest}
+Route: ${cfg.homeTerminal || "Home"} ↔ ${routes[0] ? routes[0].name : "Away"}
 
 Total Trips: ${trips.length}
 Total Meals Claimed: ${tm}
@@ -2253,7 +2294,7 @@ function exportPDF() {
   const rows = sorted.map((t,i) => `<tr>
     <td>${i+1}</td><td>${fmtDate(t.depDate)}</td><td>${t.depTime}</td>
     <td>${fmtDate(t.retDate)}</td><td>${t.retTime}</td>
-    <td>${t.origin||cfg.origin} → ${t.dest||cfg.dest}</td>
+    <td>${t.origin||cfg.homeTerminal||""} → ${t.dest||""}</td>
     <td>${fmtHours(t.hours)}</td>
     <td>${fmtHours(t.onDutyH)}</td>
     <td>${fmtHours(t.bunkhouseH)}</td>
@@ -2297,7 +2338,7 @@ tfoot td { background:#f0f4ff; font-weight:bold; border-top:2px solid #1a1a2e; }
 </table>
 <div class="footer">
 <strong>CRA Reference:</strong> Simplified method per IT-518R. Railway employees claim 50% on <strong>Line 22900</strong>. Supporting docs: <strong>TL2</strong> and <strong>T2200</strong>. Retain records 6 years.<br>
-Route: ${cfg.origin} ↔ ${cfg.dest}
+Route: ${cfg.homeTerminal || "Home"} ↔ ${routes[0] ? routes[0].name : "Away"}
 </div></body></html>`;
 
   const win = window.open('', '_blank');
