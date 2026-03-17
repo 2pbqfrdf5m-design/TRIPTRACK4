@@ -651,6 +651,7 @@ canvas.chart { width: 100% !important; border-radius: 10px; background: var(--st
       </div>
     </div>
     <div class="form-group" style="margin-bottom:10px;"><label>Notes</label><input type="text" id="editNotes"></div>
+    <div class="form-group" style="margin-bottom:10px;"><label>Crew <span style="font-size:10px;color:var(--muted);font-weight:400;">(comma separated)</span></label><input type="text" id="editCrew" placeholder="e.g. Larry, Brian"></div>
     <div class="modal-btns">
       <button class="btn-modal danger" onclick="deleteTrip()">🗑 Delete</button>
       <button class="btn-modal primary" onclick="saveEdit()">✓ Save</button>
@@ -1323,8 +1324,10 @@ function saveTrip() {
   if (!depDate || !leg1On)  { showToast('Set Leg 1 date & on duty time', true); return; }
   if (!retDate || !leg2Off) { showToast('Set Leg 2 date & off duty time', true); return; }
 
-  const dep   = new Date(depDate + 'T' + leg1On);
-  const ret   = new Date(retDate + 'T' + leg2Off);
+  const dep = new Date(depDate + 'T' + leg1On);
+  let   ret = new Date(retDate + 'T' + leg2Off);
+  // Same date but ret <= dep means trip crossed midnight
+  if (retDate === depDate && ret <= dep) ret = new Date(ret.getTime() + 86400000);
   const hours = (ret - dep) / 3600000;
   if (hours <= 0) { showToast('Return must be after departure', true); return; }
 
@@ -1701,22 +1704,30 @@ function updateStats() {
 // ══════════════════════════════════════════════════════════════════
 // EDIT / DELETE
 // ══════════════════════════════════════════════════════════════════
+function closeModal() {
+  document.getElementById('editModal').classList.remove('open');
+  editingId = null;
+}
+
 function openEdit(id) {
   const t = trips.find(x => String(x.id) === String(id));
   if (!t) return;
   editingId = t.id;
-  document.getElementById('editDepDate').value  = t.depDate;
-  document.getElementById('editDepTime').value  = t.depTime;
-  document.getElementById('editRetDate').value  = t.retDate;
-  document.getElementById('editRetTime').value  = t.retTime;
+  document.getElementById('editDepDate').value   = t.depDate;
+  document.getElementById('editDepTime').value   = t.depTime;
+  document.getElementById('editRetDate').value   = t.retDate;
+  document.getElementById('editRetTime').value   = t.retTime;
   document.getElementById('editTrainOut').value  = t.trainOut  || '';
   document.getElementById('editTrainBack').value = t.trainBack || '';
-  document.getElementById('editNotes').value    = t.notes     || '';
-  // Trip type dropdown
+  document.getElementById('editNotes').value     = t.notes     || '';
+  // Trip type
   const typeEl = document.getElementById('editTripType');
   typeEl.innerHTML = tripTypes.map(tt => `<option value="${tt}" ${tt===(t.tripType||'Thru Freight')?'selected':''}>${tt}</option>`).join('');
   // Role
   document.getElementById('editRole').value = t.role || 'engineer';
+  // Crew
+  const crewEl = document.getElementById('editCrew');
+  if (crewEl) crewEl.value = (t.coworkers || []).join(', ');
   document.getElementById('editModal').classList.add('open');
 }
 
@@ -1726,11 +1737,19 @@ function saveEdit() {
 
   const depDate = document.getElementById('editDepDate').value;
   const depTime = document.getElementById('editDepTime').value;
-  const retDate = document.getElementById('editRetDate').value;
+  let   retDate = document.getElementById('editRetDate').value;
   const retTime = document.getElementById('editRetTime').value;
 
   const dep = new Date(depDate + 'T' + depTime);
-  const ret = new Date(retDate + 'T' + retTime);
+  let   ret = new Date(retDate + 'T' + retTime);
+
+  // If same date and ret <= dep, trip crossed midnight — advance ret by one day
+  if (retDate === depDate && ret <= dep) {
+    ret = new Date(ret.getTime() + 86400000);
+    retDate = ret.toISOString().split('T')[0];
+    document.getElementById('editRetDate').value = retDate;
+  }
+
   const hours = (ret - dep) / 3600000;
   if (hours <= 0) { showToast('Return must be after departure', true); return; }
 
@@ -1738,15 +1757,30 @@ function saveEdit() {
   const gross  = meals * cfg.rate;
   const deduct = gross * (cfg.deduct / 100);
 
+  // Crew — comma or semicolon separated
+  const crewEl = document.getElementById('editCrew');
+  const coworkers = crewEl ? crewEl.value.split(/[,;]/).map(s=>s.trim()).filter(Boolean) : (trips[idx].coworkers || []);
+  // Save any new names
+  coworkers.forEach(cw => {
+    if (!loadCoworkers().includes(cw)) {
+      const list = loadCoworkers(); list.push(cw); saveCoworkers(list);
+    }
+  });
+  // Refresh global coworkers list
+  window.coworkers = loadCoworkers();
+  renderCoworkerManager();
+  renderCoworkerDropdowns();
+
   trips[idx] = {
     ...trips[idx],
     depDate, depTime, retDate, retTime,
-    trainOut:  document.getElementById('editTrainOut').value.trim().toUpperCase(),
-    trainBack: document.getElementById('editTrainBack').value.trim().toUpperCase(),
-    notes:     document.getElementById('editNotes').value.trim(),
-    tripType:  document.getElementById('editTripType').value,
-    role:      document.getElementById('editRole').value,
-    series:    getTrainSeries(document.getElementById('editTrainOut').value),
+    trainOut:   document.getElementById('editTrainOut').value.trim().toUpperCase(),
+    trainBack:  document.getElementById('editTrainBack').value.trim().toUpperCase(),
+    notes:      document.getElementById('editNotes').value.trim(),
+    tripType:   document.getElementById('editTripType').value,
+    role:       document.getElementById('editRole').value,
+    series:     getTrainSeries(document.getElementById('editTrainOut').value),
+    coworkers,
     hours, meals, gross, deduct
   };
 
@@ -1917,10 +1951,17 @@ function drawHeatmap() {
   const homeBins = Array(24).fill(0);
   const afhtBins = Array(24).fill(0);
   trips.forEach(t => {
+    // Home starts = Leg 1 on duty
     const h1 = t.depTime ? parseInt(t.depTime) : NaN;
-    const h2 = t.leg2OnTime ? parseInt(t.leg2OnTime) : NaN;
     if (!isNaN(h1) && h1 < 24) homeBins[h1]++;
+    // AFHT starts = Leg 2 on duty OR AFHT turn on duty (leg3On)
+    const h2 = t.leg2OnTime ? parseInt(t.leg2OnTime) : NaN;
     if (!isNaN(h2) && h2 < 24) afhtBins[h2]++;
+    // Also count AFHT turn leg on duty if present
+    if (t.hasTurnLeg && t.leg3On) {
+      const h3 = parseInt(t.leg3On);
+      if (!isNaN(h3) && h3 < 24) afhtBins[h3]++;
+    }
   });
   drawHeatmapCanvas('chartHeatHome', homeBins);
   drawHeatmapCanvas('chartHeatAfht', afhtBins);
