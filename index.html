@@ -732,6 +732,7 @@ function loadRoutes() {
 }
 function saveRoutes(routes) { localStorage.setItem(routesKey, JSON.stringify(routes)); }
 let routes = loadRoutes();
+function getDefaultRoute() { return routes.find(r => r.isDefault) || routes[0] || {}; }
 
 const coworkersKey = 'cn_coworkers';
 function loadCoworkers() {
@@ -1421,7 +1422,7 @@ function saveTrip() {
   const tripYear = parseInt(depDate.split('-')[0]);
 
   const routeSel = document.getElementById('routeSelect');
-  const selRoute = routes.find(r => r.id === routeSel.value) || routes[0] || {};
+  const selRoute = routes.find(r => r.id === routeSel.value) || getDefaultRoute();
 
   // IOS/FOS times (advanced mode)
   const leg1Ios = document.getElementById('leg1IosBtn').dataset.val || '';
@@ -2274,7 +2275,7 @@ function exportSummary() {
   const text = `TRIP TRACKER — TL2 MEAL EXPENSE SUMMARY
 Tax Year: ${activeYear}
 Period: ${fmtDate(first.depDate)} – ${fmtDate(last.retDate)}
-Route: ${cfg.homeTerminal || "Home"} ↔ ${routes[0] ? routes[0].name : "Away"}
+Route: ${cfg.homeTerminal || "Home"} ↔ ${getDefaultRoute().name || "Away"}
 
 Total Trips: ${trips.length}
 Total Meals Claimed: ${tm}
@@ -2379,7 +2380,7 @@ tfoot td { background:#f0f4ff; font-weight:bold; border-top:2px solid #1a1a2e; }
 </table>
 <div class="footer">
 <strong>CRA Reference:</strong> Simplified method per IT-518R. Railway employees claim 50% on <strong>Line 22900</strong>. Supporting docs: <strong>TL2</strong> and <strong>T2200</strong>. Retain records 6 years.<br>
-Route: ${cfg.homeTerminal || "Home"} ↔ ${routes[0] ? routes[0].name : "Away"}
+Route: ${cfg.homeTerminal || "Home"} ↔ ${getDefaultRoute().name || "Away"}
 </div></body></html>`;
 
   const win = window.open('', '_blank');
@@ -2395,7 +2396,15 @@ Route: ${cfg.homeTerminal || "Home"} ↔ ${routes[0] ? routes[0].name : "Away"}
 
 function exportJSON() {
   const allYears = getAllYears();
-  const backup = { version:1, exported:new Date().toISOString(), settings:cfg, books:{} };
+  const backup = {
+    version: 2,
+    exported: new Date().toISOString(),
+    settings: cfg,
+    routes,
+    coworkers,
+    tripTypes,
+    books: {}
+  };
   allYears.forEach(yr => { backup.books[yr] = loadTripsForYear(yr); });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(backup,null,2)],{type:'application/json'}));
@@ -2412,16 +2421,36 @@ function handleImportFile(e) {
   reader.onload = ev => {
     try {
       const backup = JSON.parse(ev.target.result);
-      if (!backup.books) { showToast('Invalid backup file', true); return; }
+      if (!backup.books || typeof backup.books !== 'object') { showToast('Invalid backup file', true); return; }
       const yearCount = Object.keys(backup.books).length;
       if (!confirm(`Import ${yearCount} year${yearCount!==1?'s':''} of data? Will merge with existing.`)) return;
       Object.entries(backup.books).forEach(([yr, yrTrips]) => {
+        if (!/^\d{4}$/.test(yr) || !Array.isArray(yrTrips)) return;
         const existing = loadTripsForYear(parseInt(yr));
         const merged = [...yrTrips, ...existing].filter((t,i,a) => a.findIndex(x=>x.id===t.id)===i);
         saveTripsForYear(parseInt(yr), merged);
       });
       if (backup.settings) { cfg = {...DEFAULT_SETTINGS, ...backup.settings}; saveCfg(); applySettings(); }
+      if (Array.isArray(backup.routes) && backup.routes.length) {
+        routes = backup.routes.filter(r => r && typeof r.id === 'string' && typeof r.name === 'string');
+        if (routes.length && !routes.some(r => r.isDefault)) routes[0].isDefault = true;
+        if (routes.length) saveRoutes(routes);
+      }
+      if (Array.isArray(backup.coworkers)) {
+        coworkers = [...new Set(backup.coworkers.filter(c => typeof c === 'string' && c.trim()).map(c => c.trim()))];
+        saveCoworkers(coworkers);
+      }
+      if (Array.isArray(backup.tripTypes) && backup.tripTypes.length) {
+        tripTypes = [...new Set(backup.tripTypes.filter(t => typeof t === 'string' && t.trim()).map(t => t.trim()))];
+        saveTripTypes(tripTypes);
+      }
       trips = loadTripsForYear(activeYear);
+      renderRouteDropdown();
+      renderRouteManager();
+      renderCoworkerManager();
+      renderCoworkerDropdowns();
+      renderTripTypeDropdown();
+      renderTripTypeManager();
       renderTrips();
       showToast(`Restored ${yearCount} year${yearCount!==1?'s':''} ✓`);
     } catch(err) { showToast('Failed to read backup file', true); }
@@ -2517,8 +2546,10 @@ function importCSVPaste() {
     if (!depDate || !depTime || !retDate || !retTime) { skipped++; return; }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(depDate)) { skipped++; return; }
 
+    if (!/^\d{2}:\d{2}$/.test(depTime) || !/^\d{2}:\d{2}$/.test(retTime)) { skipped++; return; }
     const dep = new Date(depDate + 'T' + depTime);
     const ret = new Date(retDate + 'T' + retTime);
+    if (Number.isNaN(dep.getTime()) || Number.isNaN(ret.getTime())) { skipped++; return; }
     const hours = (ret - dep) / 3600000;
     if (hours <= 0) { skipped++; return; }
 
@@ -2720,9 +2751,9 @@ function importGrid() {
       leg1OffTime:r.leg1Off||'', leg2OnTime:r.leg2On||'',
       retDate:r.retDate, retTime:r.retTime,
       origin: cfg.homeTerminal || '',
-      dest: routes[0] ? routes[0].name : '',
-      routeId: routes[0] ? routes[0].id : '',
-      miles: routes[0] ? routes[0].miles : null,
+      dest: getDefaultRoute().name || '',
+      routeId: getDefaultRoute().id || '',
+      miles: getDefaultRoute().miles || null,
       trainOut: (r.trainOut||'').toUpperCase(),
       trainBack: (r.trainBack||'').toUpperCase(),
       series: getTrainSeries(r.trainOut||''),
